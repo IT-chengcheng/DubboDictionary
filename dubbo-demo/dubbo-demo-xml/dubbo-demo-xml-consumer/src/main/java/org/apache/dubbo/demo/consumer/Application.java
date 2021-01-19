@@ -32,8 +32,9 @@ public class Application {
         ClassPathXmlApplicationContext context = new ClassPathXmlApplicationContext("spring/dubbo-consumer.xml");
         context.start();
         DemoService demoService = context.getBean("demoService", DemoService.class);
+        demoService.sayHello("fasdf");
         GreetingService greetingService = context.getBean("greetingService", GreetingService.class);
-
+       greetingService.hello();
         new Thread(() -> {
             while (true) {
                 String greetings = greetingService.hello();

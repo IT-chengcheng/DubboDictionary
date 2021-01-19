@@ -29,7 +29,7 @@ public class DemoServiceImpl implements DemoService {
 
     @Override
     public String sayHello(String name) {
-        logger.info("Hello " + name + ", request from consumer: " + RpcContext.getContext().getRemoteAddress());
+        logger.info("成成 Hello " + name + ", request from consumer: " + RpcContext.getContext().getRemoteAddress());
         try {
             Thread.sleep(1000);
         } catch (InterruptedException e) {

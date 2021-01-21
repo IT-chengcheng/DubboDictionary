@@ -19,6 +19,7 @@ package org.apache.dubbo.demo.consumer;
 import org.apache.dubbo.demo.DemoService;
 import org.apache.dubbo.demo.GreetingService;
 
+import org.apache.dubbo.demo.IEat;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 import java.util.concurrent.CompletableFuture;
@@ -33,12 +34,16 @@ public class Application {
         context.start();
         DemoService demoService = context.getBean("demoService", DemoService.class);
         demoService.sayHello("fasdf");
+
+        IEat eatService = context.getBean("eatService", IEat.class);
+         eatService.eat();
+
         GreetingService greetingService = context.getBean("greetingService", GreetingService.class);
        greetingService.hello();
         new Thread(() -> {
             while (true) {
                 String greetings = greetingService.hello();
-                System.out.println(greetings + " from separated thread.");
+               // System.out.println(greetings + " from separated thread.");
                 try {
                     Thread.sleep(100);
                 } catch (InterruptedException e) {
@@ -52,7 +57,7 @@ public class Application {
             System.out.println("result: " + hello.get());
 
             String greetings = greetingService.hello();
-            System.out.println("result: " + greetings);
+            //System.out.println("result: " + greetings);
 
             Thread.sleep(500);
         }

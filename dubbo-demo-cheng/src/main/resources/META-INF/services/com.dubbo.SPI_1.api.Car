@@ -1,0 +1,6 @@
+red=com.dubbo.SPI_1.impl.RedCar
+black = com.dubbo.SPI_1.impl.BlackCar
+benz = com.dubbo.SPI_1.impl.BenzCar
+com.dubbo.SPI_1.impl.AdaptiveCar
+com.dubbo.SPI_1.impl.CarWrapper
+com.dubbo.SPI_1.impl.Car2Wrapper

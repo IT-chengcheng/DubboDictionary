@@ -44,6 +44,17 @@ import java.lang.annotation.Target;
 @Target({ElementType.TYPE, ElementType.METHOD})
 public @interface Activate {
     /**
+     * 每个扩展点都有一个name，通过这个name可以获得该name对应的扩展点实例，但是有的场景下，希望一次性获得多个扩展点实例，
+     * 可以通过传入多个name来获取，可以通过识别URL上的信息来获取：
+       extensionLoader.getActivateExtension(url, new String[]{"car1", "car2"}); 这个可以拿到name为car1和car2的扩展类实例，
+      同时还会通过传入的url寻找可用的扩展类，  怎么找的呢？
+     在一个扩展点类上，可以添加@Activate注解，这个注解的属性有：
+     1. String[] group()：表示这个扩展点是属于拿组的，这里组通常分为PROVIDER和CONSUMER，表示该扩展点能在服务提供者端，或者消费端使用
+     2. String[] value()：指示的是URL中的某个参数key，当利用getActivateExtension方法来寻找扩展点时，
+     如果传入的url中包含的参数的所有key中，包括了当前扩展点中的value值，那么则表示当前url可以使用该扩展点。
+     */
+
+    /**
      * Activate the current extension when one of the groups matches. The group passed into
      * {@link ExtensionLoader#getActivateExtension(URL, String, String)} will be used for matching.
      *

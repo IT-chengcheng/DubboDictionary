@@ -19,6 +19,6 @@ public class CarWrapper implements Car{
 
     @Override
     public void getColorForUrl(URL url) {
-
+this.car.getColorForUrl(url);
     }
 }

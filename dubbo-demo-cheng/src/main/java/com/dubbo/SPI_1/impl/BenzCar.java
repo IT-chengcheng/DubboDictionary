@@ -3,7 +3,9 @@ package com.dubbo.SPI_1.impl;
 import com.dubbo.SPI_1.api.Car;
 
 import org.apache.dubbo.common.URL;
+import org.apache.dubbo.common.extension.Activate;
 
+@Activate
 public class BenzCar implements Car {
 
     private Car car;

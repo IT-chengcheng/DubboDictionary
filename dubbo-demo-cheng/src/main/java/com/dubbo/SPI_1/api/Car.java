@@ -4,11 +4,11 @@ import org.apache.dubbo.common.URL;
 import org.apache.dubbo.common.extension.Adaptive;
 import org.apache.dubbo.common.extension.SPI;
 
-@SPI
+@SPI("red")
 public interface Car {
 
     public void getColor();
 
-    @Adaptive
+    @Adaptive("aaa")
     public void getColorForUrl(URL url);
 }

@@ -11,6 +11,6 @@ public class RedCar implements Car {
 
     @Override
     public void getColorForUrl(URL url) {
-
+        System.out.println("red");
     }
 }

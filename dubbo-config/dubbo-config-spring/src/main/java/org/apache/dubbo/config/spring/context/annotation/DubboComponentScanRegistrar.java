@@ -55,6 +55,7 @@ public class DubboComponentScanRegistrar implements ImportBeanDefinitionRegistra
 
         Set<String> packagesToScan = getPackagesToScan(importingClassMetadata);
 
+        // 注册的是一个 BeanDefinitionRegistryPostProcessor，所以一看就知道是负责扫描包的
         registerServiceAnnotationBeanPostProcessor(packagesToScan, registry);
 
         // @since 2.7.6 Register the common beans
@@ -69,7 +70,7 @@ public class DubboComponentScanRegistrar implements ImportBeanDefinitionRegistra
      * @since 2.5.8
      */
     private void registerServiceAnnotationBeanPostProcessor(Set<String> packagesToScan, BeanDefinitionRegistry registry) {
-
+        // 注册的是一个 BeanDefinitionRegistryPostProcessor，所以一看就知道是负责扫描包的
         BeanDefinitionBuilder builder = rootBeanDefinition(ServiceAnnotationBeanPostProcessor.class);
         builder.addConstructorArgValue(packagesToScan);
         builder.setRole(BeanDefinition.ROLE_INFRASTRUCTURE);

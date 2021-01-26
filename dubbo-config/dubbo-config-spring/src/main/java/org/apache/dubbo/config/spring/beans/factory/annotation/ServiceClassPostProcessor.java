@@ -124,8 +124,15 @@ public class ServiceClassPostProcessor implements BeanDefinitionRegistryPostProc
 
     @Override
     public void postProcessBeanDefinitionRegistry(BeanDefinitionRegistry registry) throws BeansException {
+        /**
+         *  此方法做了三件大事：
+         *   1、注册监听器  监听ContextRefreshedEvent事件，进行 服务 export（）
+         *   2、扫描加了@DubboService注解的类，注册到 spring
+         *   3、将加了 @DubboService 注解的类，处理成dubbo的bd，再次注册到spring
+         */
 
         // @since 2.7.5
+        // 注册 listener 负责监听ContextRefreshedEvent事件，进行 服务 export（）
         registerInfrastructureBean(registry, DubboBootstrapApplicationListener.BEAN_NAME, DubboBootstrapApplicationListener.class);
 
         Set<String> resolvedPackagesToScan = resolvePackagesToScan(packagesToScan);
@@ -137,7 +144,6 @@ public class ServiceClassPostProcessor implements BeanDefinitionRegistryPostProc
                 logger.warn("packagesToScan is empty , ServiceBean registry will be ignored!");
             }
         }
-
     }
 
     /**

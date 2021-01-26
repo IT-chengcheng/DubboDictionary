@@ -45,7 +45,7 @@ public class DubboConfigConfigurationRegistrar implements ImportBeanDefinitionRe
 
     @Override
     public void registerBeanDefinitions(AnnotationMetadata importingClassMetadata, BeanDefinitionRegistry registry) {
-        /**
+        /** 此方法主要作用：
          * 会对Properties文件进行解析，主要完成的事情是根据Properties文件的每个配置项的前缀、参数名、参数值生成对应的Bean。
          *  比如前缀为"dubbo.application"的配置项，会生成一个 ApplicationConfig  类型的BeanDefinition。
          *  比如前缀为"dubbo.protocol"的配置项，会生成一个  ProtocolConfig  类型的BeanDefinition。

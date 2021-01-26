@@ -45,6 +45,7 @@ public interface DubboBeanUtils {
      * @see DubboLifecycleComponentApplicationListener
      * @see DubboBootstrapApplicationListener
      */
+    // 这个方法dubbo会调用两次，不知道为啥要这么设计！！！！！！，虽然是幂等操作
     static void registerCommonBeans(BeanDefinitionRegistry registry) {
 
         // Since 2.5.7 Register @Reference Annotation Bean Processor as an infrastructure Bean

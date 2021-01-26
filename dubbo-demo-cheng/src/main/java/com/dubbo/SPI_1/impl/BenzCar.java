@@ -12,7 +12,8 @@ public class BenzCar implements Car {
 
     // SPI注入的过程：
     // 1. 通过SpiExtensionFactory获取Car的Adaptive类，所以注入进来的对象其实是一个Adaptive类对象，代理对象...
-    public void setBlack(Car car) {
+    // 只要满足set  并且length >=4 即可，不需要大写首字母
+    public void setkkkk(Car car) {
         this.car = car;
     }
 

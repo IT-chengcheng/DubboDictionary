@@ -75,6 +75,7 @@ public @interface EnableDubboConfig {
      * @return the default value is <code>true</code>
      * @revised 2.5.9
      */
+    // 默认为true，具体含义见 DubboConfigConfigurationRegistrar
     boolean multiple() default true;
 
 }

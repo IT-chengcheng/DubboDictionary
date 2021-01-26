@@ -46,7 +46,7 @@ import java.lang.annotation.Target;
 public @interface EnableDubbo {
 
     /**
-     * Base packages to scan for annotated @Service classes.
+     * Base packages to scan for annotated @Service classes
      * <p>
      * Use {@link #scanBasePackageClasses()} for a type-safe alternative to String-based
      * package names.

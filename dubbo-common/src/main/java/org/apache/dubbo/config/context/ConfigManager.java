@@ -400,6 +400,10 @@ public class ConfigManager extends LifecycleAdapter implements FrameworkExt {
             return;
         }
         write(() -> {
+            /**
+             * 将需要注册的服务，以及各种config:RegistryConfig，ProtocolConfig存在dubbo自己缓存中，
+             * 需要的时候从缓存取出，不是从spring中取的
+             */
             Map<String, AbstractConfig> configsMap = configsCache.computeIfAbsent(getTagName(config.getClass()), type -> newMap());
             addIfAbsent(config, configsMap, unique);
         });

@@ -582,6 +582,15 @@ public abstract class AbstractConfig implements Serializable {
      */
     @PostConstruct
     public void addIntoConfigManager() {
+        /**
+         *  将需要注册到 zk的服务（服务bean extends AbstractConfig）
+         *  以及其他各种 config ：ApplicationConfig，RegistryConfig，ProtocolConfig
+         *    全部放到一个缓存map中，等用到的时候 直接从这个map中取
+         *
+         * 这个  @PostConstruct 注解的执行时机 是
+         *   CommonAnnotationBeanPostProcessor extends InitDestroyAnnotationBeanPostProcessor
+         *     在父类（InitDestroyAnnotationBeanPostProcessor）中执行 -> postProcessBeforeInitialization()
+         */
         ApplicationModel.getConfigManager().addConfig(this);
     }
 

@@ -36,6 +36,18 @@ import static org.springframework.context.annotation.AnnotationConfigUtils.regis
  */
 public class DubboClassPathBeanDefinitionScanner extends ClassPathBeanDefinitionScanner {
 
+    /**
+     *  这个类超级简单（前提是精通spring的扫描逻辑）
+     *  本类就是继承了 spring原生的 org.springframework.context.annotation.ClassPathBeanDefinitionScanner
+     *  负责扫描 dubbo需要的 bd（加了@DubboService注解的类）
+     *  类似的还有mybtis的：
+     *  org.mybatis.spring.mapper.ClassPathMapperScanner extends org.springframework.context.annotation.ClassPathBeanDefinitionScanner
+     *  mybatis只扫描 自己需要的bd（addIncludeFilter）
+     *
+     *  这个类还多做了一步：在它的构造方法中，检测了是否存在spring本身的beanprocessor，如果没有，那就加上。
+     *                      实际上都是有的，spring怎么可能忘了加自己的各种processor呢，dubbo应该只是为了严谨一些
+     *
+     */
 
     public DubboClassPathBeanDefinitionScanner(BeanDefinitionRegistry registry, boolean useDefaultFilters, Environment environment,
                                                ResourceLoader resourceLoader) {

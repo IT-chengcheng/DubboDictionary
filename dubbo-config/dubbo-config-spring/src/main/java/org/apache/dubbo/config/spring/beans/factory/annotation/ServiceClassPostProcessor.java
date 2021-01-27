@@ -128,7 +128,7 @@ public class ServiceClassPostProcessor implements BeanDefinitionRegistryPostProc
          *  此方法做了三件大事：
          *   1、注册监听器  监听ContextRefreshedEvent事件，进行 服务 export（）
          *   2、扫描加了@DubboService注解的类，注册到 spring
-         *   3、将加了 @DubboService 注解的类，处理成dubbo的bd，再次注册到spring
+         *   3、将加了 @DubboService 注解的类，处理成dubbo的bd（org.apache.dubbo.config.spring.ServiceBean），再次注册到spring
          */
 
         // @since 2.7.5
@@ -138,6 +138,7 @@ public class ServiceClassPostProcessor implements BeanDefinitionRegistryPostProc
         Set<String> resolvedPackagesToScan = resolvePackagesToScan(packagesToScan);
 
         if (!CollectionUtils.isEmpty(resolvedPackagesToScan)) {
+            // 注册bd 到 spring
             registerServiceBeans(resolvedPackagesToScan, registry);
         } else {
             if (logger.isWarnEnabled()) {
@@ -154,6 +155,7 @@ public class ServiceClassPostProcessor implements BeanDefinitionRegistryPostProc
      */
     private void registerServiceBeans(Set<String> packagesToScan, BeanDefinitionRegistry registry) {
 
+        // 进入该类，看看注释
         DubboClassPathBeanDefinitionScanner scanner =
                 new DubboClassPathBeanDefinitionScanner(registry, environment, resourceLoader);
 
@@ -163,12 +165,14 @@ public class ServiceClassPostProcessor implements BeanDefinitionRegistryPostProc
 
         // refactor @since 2.7.7
         serviceAnnotationTypes.forEach(annotationType -> {
+            // 添加过滤，只扫描加了注解的类  @DubboService  @Service(老版本)
             scanner.addIncludeFilter(new AnnotationTypeFilter(annotationType));
         });
 
         for (String packageToScan : packagesToScan) {
 
             // Registers @Service Bean first
+            // 这一步扫描完了，并且也已经把dubbo需要的bd注册到了spring中
             scanner.scan(packageToScan);
 
             // Finds all BeanDefinitionHolders of @Service whether @ComponentScan scans or not.
@@ -178,6 +182,8 @@ public class ServiceClassPostProcessor implements BeanDefinitionRegistryPostProc
             if (!CollectionUtils.isEmpty(beanDefinitionHolders)) {
 
                 for (BeanDefinitionHolder beanDefinitionHolder : beanDefinitionHolders) {
+                    // 这一步就是将bd处理成一个 dubbo 自己的 bd（org.apache.dubbo.config.spring.ServiceBean），
+                    // 然后再次注册到spring中
                     registerServiceBean(beanDefinitionHolder, registry, scanner);
                 }
 
@@ -259,7 +265,7 @@ public class ServiceClassPostProcessor implements BeanDefinitionRegistryPostProc
         Set<BeanDefinitionHolder> beanDefinitionHolders = new LinkedHashSet<>(beanDefinitions.size());
 
         for (BeanDefinition beanDefinition : beanDefinitions) {
-
+           // name生成器，跟spring一样，可就是将类的首字母小写
             String beanName = beanNameGenerator.generateBeanName(beanDefinition, registry);
             BeanDefinitionHolder beanDefinitionHolder = new BeanDefinitionHolder(beanDefinition, beanName);
             beanDefinitionHolders.add(beanDefinitionHolder);
@@ -281,27 +287,38 @@ public class ServiceClassPostProcessor implements BeanDefinitionRegistryPostProc
      */
     private void registerServiceBean(BeanDefinitionHolder beanDefinitionHolder, BeanDefinitionRegistry registry,
                                      DubboClassPathBeanDefinitionScanner scanner) {
-
+        // 取出 在 Spring 中 beanClass  -> class org.apache.dubbo.demo.provider.DemoServiceImpl
         Class<?> beanClass = resolveClass(beanDefinitionHolder);
 
         Annotation service = findServiceAnnotation(beanClass);
 
         /**
          * The {@link AnnotationAttributes} of @Service annotation
+         * 取出 @DubboService 注解的所有属性
          */
         AnnotationAttributes serviceAnnotationAttributes = getAnnotationAttributes(service, false, false);
-
+       // 取出在 Spring中的 接口类型 -> interface org.apache.dubbo.demo.DemoService
         Class<?> interfaceClass = resolveServiceInterfaceClass(serviceAnnotationAttributes, beanClass);
-
+        // 取出 在 Spring 中 beanName ：“demoServiceImpl”
         String annotatedServiceBeanName = beanDefinitionHolder.getBeanName();
-
+        /**
+         * 生成一个新的bean -> org.apache.dubbo.config.spring.ServiceBean
+         * 这个serviceBean 里面包含对 原有类的 bd名字的引用，bd的接口的引用等
+         * 而且一定要注意这个 serviceBean的父类，他有很多父类，都很重要
+         */
         AbstractBeanDefinition serviceBeanDefinition =
                 buildServiceBeanDefinition(service, serviceAnnotationAttributes, interfaceClass, annotatedServiceBeanName);
 
         // ServiceBean Bean name
+        /** 生成Dubbo自己的beanName，格式如：ServiceBean@interfaceClassName#annotatedServiceBeanName
+         *  比如 DemoService：
+         *  在 Spring 中 beanName = demoServiceImpl
+         *  在 Dubbo 中  beanName = ServiceBean:org.apache.dubbo.demo.DemoService
+         */
         String beanName = generateServiceBeanName(serviceAnnotationAttributes, interfaceClass);
 
         if (scanner.checkCandidate(beanName, serviceBeanDefinition)) { // check duplicated candidate bean
+            // 将Dubbo自己造的ServiceBean 注册到 spring中
             registry.registerBeanDefinition(beanName, serviceBeanDefinition);
 
             if (logger.isInfoEnabled()) {
@@ -393,11 +410,15 @@ public class ServiceClassPostProcessor implements BeanDefinitionRegistryPostProc
                                                               AnnotationAttributes serviceAnnotationAttributes,
                                                               Class<?> interfaceClass,
                                                               String annotatedServiceBeanName) {
-
+       // 一定要注意：新建的bd  的beanClass是Dubbo自己的bd  -> ServiceBean.class
+        // 而且一定去看看 ServiceBean 的父类 AbstractConfig，有个 方法加了@PostConstruct
         BeanDefinitionBuilder builder = rootBeanDefinition(ServiceBean.class);
 
         AbstractBeanDefinition beanDefinition = builder.getBeanDefinition();
-
+        /**
+         * 下面做的所有的操作就是利用 spring的 beanDefinition.getPropertyValues()，提前给没有实例化的bean，赋值
+         *  怎么做到的？详细去看 spring的源码解析！！
+         */
         MutablePropertyValues propertyValues = beanDefinition.getPropertyValues();
 
         String[] ignoreAttributeNames = of("provider", "monitor", "application", "module", "registry", "protocol",

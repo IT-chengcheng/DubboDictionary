@@ -76,6 +76,7 @@ public abstract class AnnotatedInterfaceConfigBeanBuilder<C extends AbstractInte
 
         checkDependencies();
 
+        // 仅仅是 new ReferenceBean()
         C configBean = doBuild();
 
         configureBean(configBean);
@@ -112,6 +113,7 @@ public abstract class AnnotatedInterfaceConfigBeanBuilder<C extends AbstractInte
 
         configureModuleConfig(configBean);
 
+        // 里面调用了 afterPropertiesSet（）
         postConfigureBean(attributes, configBean);
 
     }

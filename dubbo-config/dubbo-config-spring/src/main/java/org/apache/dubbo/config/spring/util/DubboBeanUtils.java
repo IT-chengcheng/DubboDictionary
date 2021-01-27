@@ -47,8 +47,28 @@ public interface DubboBeanUtils {
      */
     // 这个方法dubbo会调用两次，不知道为啥要这么设计！！！！！！，虽然是幂等操作
     static void registerCommonBeans(BeanDefinitionRegistry registry) {
-
+        /**
+         * 重点来了，这些注册的 bd，一定要挨个仔细看！！！
+         */
         // Since 2.5.7 Register @Reference Annotation Bean Processor as an infrastructure Bean
+        /**
+         *  去看父类 AbstractAnnotationBeanPostProcessor ->  postProcessPropertyValues(.....)的方法 ，这是触发点
+         *  ReferenceAnnotationBeanPostProcessor extends   abstract AbstractAnnotationBeanPostProcessor
+         *    extends InstantiationAwareBeanPostProcessorAdapter  implements InstantiationAwareBeanPostProcessor
+         *
+         *   spring实例化完bean后，会调用 postProcessPropertyValues(.....) ,进入AbstractAnnotationBeanPostProcessor的postProcessPropertyValues(.....)
+         * 父类做的主要是找到加了注解 @Refrence 的属性，然后进行注入，最终调用的是 ReferenceAnnotationBeanPostProcessor.doGetInjectedBean()
+         * 所以进入该方法，仔细看就行了。
+         *
+         * 重点来了：
+         * 这两个类是dubbo自定义的： ReferenceAnnotationBeanPostProcessor extends abstract AbstractAnnotationBeanPostProcessor
+         * 而且最终继承了 spring的  InstantiationAwareBeanPostProcessor。
+         * Spring默认InstantiationAwareBeanPostProcessor的实现类 是
+         *    CommonAnnotationBeanPostProcessor   处理@Resource注解
+         *    AutowiredAnnotationBeanPostProcessor  处理@Autowire注解
+         * 而 dubbo自定义的实现类 负责处理 dubbo自己的 @Refrence 注解
+         * 所以这些逻辑都是一样的，可以详细去看spring源码！！！！
+         */
         registerInfrastructureBean(registry, ReferenceAnnotationBeanPostProcessor.BEAN_NAME,
                 ReferenceAnnotationBeanPostProcessor.class);
 

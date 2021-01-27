@@ -55,6 +55,9 @@ import static org.springframework.util.StringUtils.hasText;
  * @see com.alibaba.dubbo.config.annotation.Reference
  * @since 2.5.7
  */
+/**
+ *  去看父类 AbstractAnnotationBeanPostProcessor ->  postProcessPropertyValues(.....)的方法 ，这是触发点
+ */
 public class ReferenceAnnotationBeanPostProcessor extends AbstractAnnotationBeanPostProcessor implements
         ApplicationContextAware {
 
@@ -123,24 +126,40 @@ public class ReferenceAnnotationBeanPostProcessor extends AbstractAnnotationBean
                                        InjectionMetadata.InjectedElement injectedElement) throws Exception {
         /**
          * The name of bean that annotated Dubbo's {@link Service @Service} in local Spring {@link ApplicationContext}
+         *
+         * referencedBeanName 是 -> ServiceBean:org.apache.dubbo.demo.DemoService
+         * 这个名字跟provider注册到spring的bd的名字是一样的，当然也是按照同一个规则生成的。
+         * 之所以这里在按照provider一样的规则生成这个 referencedBeanName，是为了下面看看本地，
+         * 也就是consumer 的spring的容器中 是否有 这个referencedBeanName，如果有说明 consumer引用的这个bean
+         * 就是 consumer本身的，就不用去再走下面的逻辑生成refrecenBean了，如果本地spring容器中没有这个referencedBeanName，
+         * 那就去生成一个refrecenBean
          */
         String referencedBeanName = buildReferencedBeanName(attributes, injectedType);
 
         /**
          * The name of bean that is declared by {@link Reference @Reference} annotation injection
+         *
+         * referenceBeanName 是 “@Reference org.apache.dubbo.demo.DemoService”
          */
         String referenceBeanName = getReferenceBeanName(attributes, injectedType);
-
+        /**
+         * 重点来啦！！！！！
+         */
         ReferenceBean referenceBean = buildReferenceBeanIfAbsent(referenceBeanName, attributes, injectedType);
 
+        // 看一下上面这个 referencedBeanName 是不是本地 bean，（一般肯定都不是本地，都是引用远程的，也即是生成代理）
         boolean localServiceBean = isLocalServiceBean(referencedBeanName, referenceBean, attributes);
 
+        // 如果 referencedBeanName是本地的bean，那么就将这个bean注册到 远程（zookeeper等）
         prepareReferenceBean(referencedBeanName, referenceBean, localServiceBean);
 
+        // 将这个新创建的 ReferenceBean 注册到 spring容器中，名字是“@Reference org.apache.dubbo.demo.DemoService”
         registerReferenceBean(referencedBeanName, referenceBean, attributes, localServiceBean, injectedType);
 
+        // 将 ReferenceBean放入缓存
         cacheInjectedReferenceBean(referenceBean, injectedElement);
 
+        // 需要注意的是ReferenceBean的get()方法就是服务引入流程的入口
         return referenceBean.get();
     }
 
@@ -159,7 +178,7 @@ public class ReferenceAnnotationBeanPostProcessor extends AbstractAnnotationBean
                                        boolean localServiceBean, Class<?> interfaceClass) {
 
         ConfigurableListableBeanFactory beanFactory = getBeanFactory();
-
+        // beanName -> "@Reference org.apache.dubbo.demo.DemoService"
         String beanName = getReferenceBeanName(attributes, interfaceClass);
 
         if (localServiceBean) {  // If @Service bean is local one
@@ -175,6 +194,7 @@ public class ReferenceAnnotationBeanPostProcessor extends AbstractAnnotationBean
             beanFactory.registerAlias(serviceBeanName, beanName);
         } else { // Remote @Service Bean
             if (!beanFactory.containsBean(beanName)) {
+                // 将这个新创建的 ReferenceBean 注册到 spring容器中，名字是“@Reference org.apache.dubbo.demo.DemoService”
                 beanFactory.registerSingleton(beanName, referenceBean);
             }
         }
@@ -307,7 +327,10 @@ public class ReferenceAnnotationBeanPostProcessor extends AbstractAnnotationBean
     private ReferenceBean buildReferenceBeanIfAbsent(String referenceBeanName, AnnotationAttributes attributes,
                                                      Class<?> referencedType)
             throws Exception {
-
+        /**
+         * referenceBeanName = “@Reference org.apache.dubbo.demo.DemoService”
+         * referencedType = “org.apache.dubbo.demo.DemoService ”
+         */
         ReferenceBean<?> referenceBean = referenceBeanCache.get(referenceBeanName);
 
         if (referenceBean == null) {

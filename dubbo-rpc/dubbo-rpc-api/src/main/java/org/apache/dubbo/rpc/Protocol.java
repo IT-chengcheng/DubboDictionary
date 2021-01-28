@@ -40,7 +40,7 @@ public interface Protocol {
      * Export service for remote invocation: <br>
      * 1. Protocol should record request source address after receive a request:
      * RpcContext.getContext().setRemoteAddress();<br>
-     * 2. export() must be idempotent, that is, there's no difference between invoking once and invoking twice when
+     * 2. export() must be idempotent  /ˌaɪdemˈpəʊt(ə)nt/幂等的, that is, there's no difference between invoking once and invoking twice when
      * export the same URL<br>
      * 3. Invoker instance is passed in by the framework, protocol needs not to care <br>
      *
@@ -49,6 +49,9 @@ public interface Protocol {
      * @return exporter reference for exported service, useful for unexport the service later
      * @throws RpcException thrown when error occurs during export the service, for example: port is occupied
      */
+    //adaptive 注解value，如果为空，默认是 接口类名 ->
+    // 如：LoadBalance 经过处理后，得到 load.balance
+    // Protocal 经过处理后，得到  protocal
     @Adaptive
     <T> Exporter<T> export(Invoker<T> invoker) throws RpcException;
 

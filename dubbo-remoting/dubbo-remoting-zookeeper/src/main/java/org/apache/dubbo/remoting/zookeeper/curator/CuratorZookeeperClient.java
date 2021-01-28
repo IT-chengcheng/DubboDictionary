@@ -60,9 +60,13 @@ public class CuratorZookeeperClient extends AbstractZookeeperClient<CuratorZooke
 
     public CuratorZookeeperClient(URL url) {
         super(url);
+        /**
+         * CuratorZookeeperClient 构造方法主要用于创建和启动 CuratorFramework 实例
+         */
         try {
             int timeout = url.getParameter(TIMEOUT_KEY, DEFAULT_CONNECTION_TIMEOUT_MS);
             int sessionExpireMs = url.getParameter(ZK_SESSION_EXPIRE_KEY, DEFAULT_SESSION_TIMEOUT_MS);
+            // 创建 CuratorFramework 构造器
             CuratorFrameworkFactory.Builder builder = CuratorFrameworkFactory.builder()
                     .connectString(url.getBackupAddress())
                     .retryPolicy(new RetryNTimes(1, 1000))
@@ -72,8 +76,11 @@ public class CuratorZookeeperClient extends AbstractZookeeperClient<CuratorZooke
             if (authority != null && authority.length() > 0) {
                 builder = builder.authorization("digest", authority.getBytes());
             }
+            // 构建 CuratorFramework 实例
             client = builder.build();
+            // 添加监听器
             client.getConnectionStateListenable().addListener(new CuratorConnectionStateListener(url));
+            // 启动客户端
             client.start();
             boolean connected = client.blockUntilConnected(timeout, TimeUnit.MILLISECONDS);
             if (!connected) {
@@ -98,6 +105,7 @@ public class CuratorZookeeperClient extends AbstractZookeeperClient<CuratorZooke
     @Override
     public void createEphemeral(String path) {
         try {
+            // 通过 Curator 框架创建节点
             client.create().withMode(CreateMode.EPHEMERAL).forPath(path);
         } catch (NodeExistsException e) {
             logger.warn("ZNode " + path + " already exists, since we will only try to recreate a node on a session expiration" +

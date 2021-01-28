@@ -178,7 +178,11 @@ public class RegistryProtocol implements Protocol {
     }
 
     private void register(URL registryUrl, URL registeredProviderUrl) {
+        // 获取 Registry  获取注册中心实例      registryFactory->  AbstractRegistryFactory
         Registry registry = registryFactory.getRegistry(registryUrl);
+        // 注册服务  向注册中心注册服务
+        // 所谓的服务注册，本质上是将服务配置数据写入到 Zookeeper(redis,nacos) 的某个路径的节点下
+        // 这个方法定义在 FailbackRegistry(这是其他类的父类) 抽象类中
         registry.register(registeredProviderUrl);
     }
 
@@ -192,29 +196,56 @@ public class RegistryProtocol implements Protocol {
 
     @Override
     public <T> Exporter<T> export(final Invoker<T> originInvoker) throws RpcException {
+        /**
+         * 包含了 服务导出 与 服务注册 两个过程
+         */
+
+        /**
+         * 获取注册中心 URL，以 zookeeper 注册中心为例，得到的示例 URL 如下：
+         * zookeeper://127.0.0.1:2181/com.alibaba.dubbo.registry.RegistryService?application=demo-provider&dubbo=2.0.2
+         * &export=dubbo%3A%2F%2F172.17.48.52%3A20880%2Fcom.alibaba.dubbo.demo.DemoService%3Fanyhost%3Dtrue%26application%3Ddemo-provider
+         * export解码后：
+         * export=dubbo://172.17.48.52:20880/com.alibaba.dubbo.demo.DemoService?anyhost=true&application=demo-provider
+         */
         URL registryUrl = getRegistryUrl(originInvoker);
-        // url to export locally
+        /**待定是这个注释：debug看看
+         * url to export locally 获取已注册的服务提供者 URL，比如：
+         * dubbo://172.17.48.52:20880/com.alibaba.dubbo.demo.DemoService?anyhost=true&application=demo-provider&dubbo=2.0.2
+         * &generic=false&interface=com.alibaba.dubbo.demo.DemoService&methods=sayHello
+         */
         URL providerUrl = getProviderUrl(originInvoker);
 
         // Subscribe the override data
         // FIXME When the provider subscribes, it will affect the scene : a certain JVM exposes the service and call
         //  the same service. Because the subscribed is cached key with the name of the service, it causes the
         //  subscription information to cover.
+        /**
+         * 获取订阅 URL，比如：
+         * provider://172.17.48.52:20880/com.alibaba.dubbo.demo.DemoService?category=configurators&check=false&anyhost=true
+         * &application=demo-provider&dubbo=2.0.2&generic=false&interface=com.alibaba.dubbo.demo.DemoService&methods=sayHello
+         */
         final URL overrideSubscribeUrl = getSubscribedOverrideUrl(providerUrl);
+        // 创建监听器
         final OverrideListener overrideSubscribeListener = new OverrideListener(overrideSubscribeUrl, originInvoker);
         overrideListeners.put(overrideSubscribeUrl, overrideSubscribeListener);
 
         providerUrl = overrideUrlWithConfig(providerUrl, overrideSubscribeListener);
-        //export invoker
+        //export invoker  导出服务
         final ExporterChangeableWrapper<T> exporter = doLocalExport(originInvoker, providerUrl);
 
         // url to registry
+        // 根据 URL 加载 Registry 实现类，比如 ZookeeperRegistry
         final Registry registry = getRegistry(originInvoker);
         final URL registeredProviderUrl = getUrlToRegistry(providerUrl, registryUrl);
 
-        // decide if we need to delay publish
+        // decide if we need to delay publish   获取 register 参数
         boolean register = providerUrl.getParameter(REGISTER_KEY, true);
         if (register) {
+            // 向注册中心注册服务
+            /**
+             * 服务注册操作对于 Dubbo 来说不是必需的，通过服务直连的方式就可以绕过注册中心。
+             * 但通常我们不会这么做，直连方式不利于服务治理
+             */
             register(registryUrl, registeredProviderUrl);
         }
 
@@ -226,10 +257,12 @@ public class RegistryProtocol implements Protocol {
         exporter.setSubscribeUrl(overrideSubscribeUrl);
 
         // Deprecated! Subscribe to override rules in 2.6.x or before.
+        // 向注册中心进行订阅 override 数据
         registry.subscribe(overrideSubscribeUrl, overrideSubscribeListener);
 
         notifyExport(exporter);
         //Ensure that a new exporter instance is returned every time export
+        // 创建并返回 DestroyableExporter
         return new DestroyableExporter<>(exporter);
     }
 
@@ -254,9 +287,16 @@ public class RegistryProtocol implements Protocol {
     private <T> ExporterChangeableWrapper<T> doLocalExport(final Invoker<T> originInvoker, URL providerUrl) {
         String key = getCacheKey(originInvoker);
 
+         // 先从缓存中取，缓存汇中没有再去创建，然后再放入缓存，学习一下 computeIfAbsent（）用法
         return (ExporterChangeableWrapper<T>) bounds.computeIfAbsent(key, s -> {
+            // 创建 Invoker 为委托类对象
             Invoker<?> invokerDelegate = new InvokerDelegate<>(originInvoker, providerUrl);
+            // 调用 protocol 的 export 方法导出服务
+            /**
+             * 假设运行时协议为 dubbo，此处的 protocol 变量会在运行时加载 DubboProtocol，并调用 DubboProtocol 的 export 方法。
+             */
             return new ExporterChangeableWrapper<>((Exporter<T>) protocol.export(invokerDelegate), originInvoker);
+
         });
     }
 

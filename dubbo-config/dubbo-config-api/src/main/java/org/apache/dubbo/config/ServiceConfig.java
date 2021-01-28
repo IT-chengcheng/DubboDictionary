@@ -544,7 +544,12 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
                         Invoker<?> invoker = PROXY_FACTORY.getInvoker(ref, (Class) interfaceClass, registryURL.addParameterAndEncoded(EXPORT_KEY, url.toFullString()));
                         // DelegateProviderMetaDataInvoker 用于持有 Invoker 和 ServiceConfig
                         DelegateProviderMetaDataInvoker wrapperInvoker = new DelegateProviderMetaDataInvoker(invoker, this);
-                        // 导出服务，并生成 Exporter
+                        /**
+                         * 导出服务，并生成 Exporter
+                         * 导出服务到本地相比，导出服务到远程的过程要复杂不少，
+                         * 其包含了服务导出与服务注册两个过程
+                         * RegistryProtocol
+                         */
                         Exporter<?> exporter = PROTOCOL.export(wrapperInvoker);
                         exporters.add(exporter);
                     }

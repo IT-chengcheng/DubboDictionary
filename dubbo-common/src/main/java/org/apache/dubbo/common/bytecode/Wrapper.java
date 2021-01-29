@@ -117,6 +117,18 @@ public abstract class Wrapper {
     }
 
     private static Wrapper makeWrapper(Class<?> c) {
+
+        /**
+         * 1、以 入参接口c = GreetingService为例，生成的代理类是
+         * org.apache.dubbo.common.bytecode.Wrapper0  extends Wrapper
+         * 这个虚拟代理类，我已经手敲打了一遍，放入工程里了，找一下看看 org.apache.dubbo.common.bytecode.Wrapper0
+         * 2、JDK动态代理生成的虚拟类，也整理了，放在本类的同级包下
+         * 3、CGLib 动态代理：动态字节码生成。使用动态字节码生成技术实现AOP原理是在运行期间目标字节码加载后，
+         *            生成目标类的子类，将切面逻辑加入到子类中，所以使用Cglib实现AOP不需要基于接口。
+         * 三种动态代理对比看看！！！！！
+         * F:\学习\Spring 目录下 有个小Demo，可以看看，里面涉及字节码编译技术，dubbo用的是javassist
+         */
+
         // 检测 c 是否为基本类型，若是则抛出异常
         if (c.isPrimitive()) {
             throw new IllegalArgumentException("Can not create wrapper for primitive type: " + c);
@@ -311,7 +323,6 @@ public abstract class Wrapper {
         cc.addMethod(c1.toString());
         cc.addMethod(c2.toString());
         cc.addMethod(c3.toString());
-
         try {
             // 生成类  该方法底层通过 javassist 构建 Class（跟SPI-adptive一样）
             Class<?> wc = cc.toClass();

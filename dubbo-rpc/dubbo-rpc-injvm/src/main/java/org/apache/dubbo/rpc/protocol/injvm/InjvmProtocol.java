@@ -90,6 +90,7 @@ public class InjvmProtocol extends AbstractProtocol implements Protocol {
     @Override
     public <T> Exporter<T> export(Invoker<T> invoker) throws RpcException {
         // 创建 InjvmExporter ， InjvmProtocol 的 export 方法仅创建了一个 InjvmExporter，无其他逻辑
+        // 但是 会将 这个invoker保存起来，后续调用， 比如调用 GreeetingServiceImpl方法
         return new InjvmExporter<T>(invoker, invoker.getUrl().getServiceKey(), exporterMap);
     }
 

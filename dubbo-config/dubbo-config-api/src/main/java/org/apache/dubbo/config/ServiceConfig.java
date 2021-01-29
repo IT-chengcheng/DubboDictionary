@@ -137,7 +137,7 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
     private DubboBootstrap bootstrap;
 
     /**
-     * The exported services
+     * The exported services, 导出的服务
      */
     private final List<Exporter<?>> exporters = new ArrayList<Exporter<?>>();
 
@@ -350,13 +350,6 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
     }
 
     private void doExportUrlsFor1Protocol(ProtocolConfig protocolConfig, List<URL> registryURLs) {
-        /**
-         * List<URL> registryURLs
-         * 单个 URL -> registry://127.0.0.1:2181/org.apache.dubbo.registry.RegistryService?application=demo-provider
-         *              &dubbo=2.0.2&id=registry1&mapping-type=metadata&mapping.type=metadata&pid=10000&qos.port=22222
-         *              &registry=zookeeper&timestamp=1611892414279
-         * 由此分析呢：协议的路径 就是执行动作的类
-         */
 
         String name = protocolConfig.getName();
         if (StringUtils.isEmpty(name)) {
@@ -480,6 +473,7 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
                 map.put(METHODS_KEY, ANY_VALUE);
             } else {
                 // 将逗号作为分隔符连接方法名，并将连接后的字符串放入 map 中
+                // ->   haveNoReturn,setTestgaga,getTestddd,hello
                 map.put(METHODS_KEY, StringUtils.join(new HashSet<String>(Arrays.asList(methods)), ","));
             }
         }
@@ -503,10 +497,27 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
         //init serviceMetadata attachments
         serviceMetadata.getAttachments().putAll(map);
 
-        // export service   获取 host 和 port
+        /**
+         * List<URL> registryURLs
+         * 单个 URL -> registry://127.0.0.1:2181/org.apache.dubbo.registry.RegistryService?application=demo-provider
+         *              &dubbo=2.0.2&id=registry1&mapping-type=metadata&mapping.type=metadata&pid=10000&qos.port=22222
+         *              &registry=zookeeper&timestamp=1611892414279
+         * 由此分析呢：协议的路径 就是执行动作的类
+         */
+        // export IP 获取 本地主机的IP,也就是要暴露接口服务所属主机的IP地址（就是netty或者tomcat绑定的 IP ）
         String host = findConfigedHosts(protocolConfig, registryURLs, map);
+        // export port 获取 暴露的端口,也就是要暴露接口服务 所属 服务的 端口（就是netty或者tomcat绑定的 端口）,默认20880
         Integer port = findConfigedPorts(protocolConfig, name, map);
+
         // 组装 URL
+        // getContextPath(protocolConfig) 获取的就是 url的path
+        // 成员变量path 就是 接口名 -> org.apache.dubbo.demo.GreetingService
+        // 所以最终组装的path就是 contextPath+"/"+path ，但是这里contextPath为空
+        // url = dubbo://192.168.1.103:20880/org.apache.dubbo.demo.GreetingService?anyhost=true&application=demo-provider
+        //            &bind.ip=192.168.1.103&bind.port=20880&deprecated=false&dubbo=2.0.2&dynamic=true&generic=false&group=greeting
+        //            &interface=org.apache.dubbo.demo.GreetingService&mapping-type=metadata&mapping.type=metadata&metadata-type=remote
+        //            &methods=haveNoReturn,setTestgaga,getTestddd,hello&pid=1144&qos.port=22222&release=&revision=1.0.0
+        //            &side=provider&timeout=5000&timestamp=1611924667311&version=1.0.0
         URL url = new URL(name, host, port, getContextPath(protocolConfig).map(p -> p + "/" + path).orElse(path), map);
 
         /**
@@ -514,7 +525,7 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
          */
         // You can customize Configurator to append extra parameters
         if (ExtensionLoader.getExtensionLoader(ConfiguratorFactory.class)
-                .hasExtension(url.getProtocol())) {
+                .hasExtension(url.getProtocol())) { // 没有自定义的话，就不会进这个判断
             // 加载 ConfiguratorFactory，并生成 Configurator 实例，然后通过实例配置 url
             url = ExtensionLoader.getExtensionLoader(ConfiguratorFactory.class)
                     .getExtension(url.getProtocol()).getConfigurator(url).configure(url);
@@ -541,6 +552,13 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
             if (!SCOPE_LOCAL.equalsIgnoreCase(scope)) {  // scope != local，导出到远程
                 if (CollectionUtils.isNotEmpty(registryURLs)) {
                     for (URL registryURL : registryURLs) {
+                        /**
+                         * List<URL> registryURLs
+                         * 单个 URL -> registry://127.0.0.1:2181/org.apache.dubbo.registry.RegistryService?application=demo-provider
+                         *              &dubbo=2.0.2&id=registry1&mapping-type=metadata&mapping.type=metadata&pid=10000&qos.port=22222
+                         *              &registry=zookeeper&timestamp=1611892414279
+                         * 由此分析呢：协议的路径 就是执行动作的类
+                         */
                         //if protocol is only injvm ,not register
                         if (LOCAL_PROTOCOL.equalsIgnoreCase(url.getProtocol())) {
                             continue;
@@ -559,7 +577,11 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
                                 logger.info("Export dubbo service " + interfaceClass.getName() + " to url " + url);
                             }
                         }
-
+                        // url = dubbo://192.168.1.103:20880/org.apache.dubbo.demo.GreetingService?anyhost=true&application=demo-provider
+                        //            &bind.ip=192.168.1.103&bind.port=20880&deprecated=false&dubbo=2.0.2&dynamic=true&generic=false&group=greeting
+                        //            &interface=org.apache.dubbo.demo.GreetingService&mapping-type=metadata&mapping.type=metadata&metadata-type=remote
+                        //            &methods=haveNoReturn,setTestgaga,getTestddd,hello&pid=1144&qos.port=22222&release=&revision=1.0.0
+                        //            &side=provider&timeout=5000&timestamp=1611924667311&version=1.0.0
                         // For providers, this is used to enable custom proxy to generate invoker
                         String proxy = url.getParameter(PROXY_KEY);
                         if (StringUtils.isNotEmpty(proxy)) {
@@ -601,15 +623,47 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
      * always export injvm
      */
     private void exportLocal(URL url) {
+        // url = dubbo://192.168.1.103:20880/org.apache.dubbo.demo.GreetingService?anyhost=true&application=demo-provider
+        //            &bind.ip=192.168.1.103&bind.port=20880&deprecated=false&dubbo=2.0.2&dynamic=true&generic=false&group=greeting
+        //            &interface=org.apache.dubbo.demo.GreetingService&mapping-type=metadata&mapping.type=metadata&metadata-type=remote
+        //            &methods=haveNoReturn,setTestgaga,getTestddd,hello&pid=1144&qos.port=22222&release=&revision=1.0.0
+        //            &side=provider&timeout=5000&timestamp=1611924667311&version=1.0.0
+
+
+       // local = injvm://127.0.0.1/org.apache.dubbo.demo.GreetingService?anyhost=true&application=demo-provider&bind.ip=192.168.1.103
+        //            &bind.port=20880&deprecated=false&dubbo=2.0.2&dynamic=true&generic=false&group=greeting
+        //            &interface=org.apache.dubbo.demo.GreetingService&mapping-type=metadata&mapping.type=metadata&metadata-type=remote
+        //            &methods=haveNoReturn,setTestgaga,getTestddd,hello&pid=3584&qos.port=22222&release=&revision=1.0.0&side=provider
+        //            &timeout=5000&timestamp=1611925591427&version=1.0.0
         URL local = URLBuilder.from(url)
                 .setProtocol(LOCAL_PROTOCOL)   // 设置协议头为 injvm
-                .setHost(LOCALHOST_VALUE)
+                .setHost(LOCALHOST_VALUE) // "127.0.0.1"
                 .setPort(0)
                 .build();
-        // 创建 Invoker，并导出服务，这里的 protocol 会在运行时调用 InjvmProtocol 的 export 方法
+        // 创建 Invoker，并导出服务，这里的 protocol 会在运行时调用 InjvmProtocol 的 export 方法,下面具体分析
         Exporter<?> exporter = PROTOCOL.export(
                 PROXY_FACTORY.getInvoker(ref, (Class) interfaceClass, local));
         exporters.add(exporter);
+        /**
+         * 分两段进行分析
+         * 一、
+         * 1、PROXY_FACTORY.getInvoker(ref, (Class) interfaceClass, local)
+         *       ref     ->   接口的实现类，也就是 GreetingServiceImpl
+         *       interfaceClass    -> 接口  GreetingService
+         * 根据DubboSPI机制，PROXY_FACTORY 是 ProxyFactory$Adaptive.java 代理类,调用的getInvoker（....）具体调用到哪个真实类 取决于
+         * url.getParameter(...),local入参就是url，而 interface ProxyFactory的接口有注解@SPI("javassist")，方法有注解@Adaptive({proxy})
+         * 所以  url.getParameter("proxy") 为null的时候，默认就是 javassist，也就是 会进入 JavassistProxyFactory类
+         * 上面的这一块的解析，还是取决的与SPI-adaptive的原理，一定要仔细看！！
+         * 2、进入 JavassistProxyFactory类，研究动态代理的产生过程
+         *    最终返回一个 Invoker，但是是个匿名内部类：AbstractProxyInvoker$038483   继承 AbstractProxyInvoker
+         * 二、PROTOCOL.export（invoker）
+         *   上面我们已经知道了 invoker 是个匿名内部类：AbstractProxyInvoker$038483 继承 AbstractProxyInvoker
+         *   调用 PROTOCOL.export（invoker），会先 url = invoker.getUrl(..)，调用的是父类AbstractProxyInvoker.getUrl(...)
+         *   返回的就是 开始传入的 local = injvm://127.0.0.1/org.apache.dubbo.demo.GreetingService?....
+         *   根据DubboSPI机制,PROTOCOL 是 Protocol$Adatptive.java,调用 export（invoker）具体调用到哪个真实类 取决于
+         *   url.getProtcol(..),而不是取决于 url.getParameter(...) ，：具体原因看adaptive原理
+         *   url.getProtcol(..) = injvm ,所以进入 InjvmProtocol 类
+         */
         logger.info("Export dubbo service " + interfaceClass.getName() + " to local registry url : " + local);
     }
 
@@ -638,7 +692,7 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
                                      List<URL> registryURLs,
                                      Map<String, String> map) {
         boolean anyhost = false;
-
+        // 从系统变量里获取，一般都是空的  -> getSystemProperty
         String hostToBind = getValueFromConfig(protocolConfig, DUBBO_IP_TO_BIND);
         if (hostToBind != null && hostToBind.length() > 0 && isInvalidLocalHost(hostToBind)) {
             throw new IllegalArgumentException("Specified invalid bind ip from property:" + DUBBO_IP_TO_BIND + ", value:" + hostToBind);
@@ -646,18 +700,22 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
 
         // if bind ip is not found in environment, keep looking up
         if (StringUtils.isEmpty(hostToBind)) {
+            // 这是xml配置文件里，或者properties文件里指定IP,当然一般也不会指定的，所以也是空
             hostToBind = protocolConfig.getHost();
             if (provider != null && StringUtils.isEmpty(hostToBind)) {
                 hostToBind = provider.getHost();
             }
             if (isInvalidLocalHost(hostToBind)) {
+                // 如果从系统变量里获取不到，程序员也没有手动指定IP，那就动态获取本机IP
                 anyhost = true;
                 try {
                     logger.info("No valid ip found from environment, try to find valid host from DNS.");
+                    // 动态获取本机IP,这里肯定不是空
                     hostToBind = InetAddress.getLocalHost().getHostAddress();
                 } catch (UnknownHostException e) {
                     logger.warn(e.getMessage(), e);
                 }
+                // 这个判断不会成立，因为上面已经从本地主机获取到了 IP
                 if (isInvalidLocalHost(hostToBind)) {
                     if (CollectionUtils.isNotEmpty(registryURLs)) {
                         for (URL registryURL : registryURLs) {
@@ -685,6 +743,7 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
         map.put(BIND_IP_KEY, hostToBind);
 
         // registry ip is not used for bind ip by default
+        // 也是从 系统环境变量里 获取，当时一般也不会配置，所以也是空
         String hostToRegistry = getValueFromConfig(protocolConfig, DUBBO_IP_TO_REGISTRY);
         if (hostToRegistry != null && hostToRegistry.length() > 0 && isInvalidLocalHost(hostToRegistry)) {
             throw new IllegalArgumentException("Specified invalid registry ip from property:" + DUBBO_IP_TO_REGISTRY + ", value:" + hostToRegistry);

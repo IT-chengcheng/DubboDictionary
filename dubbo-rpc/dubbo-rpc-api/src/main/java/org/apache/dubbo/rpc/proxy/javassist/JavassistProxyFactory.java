@@ -38,8 +38,11 @@ public class JavassistProxyFactory extends AbstractProxyFactory {
 
     @Override
     public <T> Invoker<T> getInvoker(T proxy, Class<T> type, URL url) {
+        //proxy -> GreetingServiceImpl
+        // type -> GreeetingService
         // TODO Wrapper cannot handle this scenario correctly: the classname contains '$'
-        // 为目标类创建 Wrapper
+        // 为目标类创建 Wrapper，Wrapper是 GreetingServiceImpl 的代理类，里面最终执行的是 GreetingServiceImpl方法
+        // Wrapper真实面目：点入 makeWrapper（）看看
         final Wrapper wrapper = Wrapper.getWrapper(proxy.getClass().getName().indexOf('$') < 0 ? proxy.getClass() : type);
         // 创建匿名 Invoker 类对象，并实现 doInvoke 方法。
         /**
@@ -55,7 +58,11 @@ public class JavassistProxyFactory extends AbstractProxyFactory {
             protected Object doInvoke(T proxy, String methodName,
                                       Class<?>[] parameterTypes,
                                       Object[] arguments) throws Throwable {
-                // 调用 Wrapper 的 invokeMethod 方法，invokeMethod 最终会调用目标方法
+                // 调用 Wrapper 的 invokeMethod 方法，invokeMethod 最终会调用目标方法,也就是 GreeetingServiceImpl的方法
+                // proxy -> GreetingServiceImpl
+                // methodName  ->  方法名
+                // parameterTypes -> 入参 类型
+                // arguments   -> 入参值
                 return wrapper.invokeMethod(proxy, methodName, parameterTypes, arguments);
             }
         };

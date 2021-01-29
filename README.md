@@ -1,10 +1,12 @@
 # 基于 Dubbo 3.0 版本的源码分析
 
 ## 涉及内容
-+ 1、Dubbo启动流程 源码解析
-+ 2、Dubbo SPI机制，以及自适应的源码解析
++ 1、Dubbo启动流程
++ 2、Dubbo SPI机制，以及adaptive源码解析
 + 3、Spring与Dubbo整合原理
-+ 4、
++ 4、Dubbo动态代理技术、以及与JDK动态代理源码的对比
++ 5、Dubbo的服务导出功能
++ 
 
 # Apache Dubbo Project
 

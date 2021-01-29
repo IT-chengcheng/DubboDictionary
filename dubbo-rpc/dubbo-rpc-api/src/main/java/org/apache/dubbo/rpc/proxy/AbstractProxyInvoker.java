@@ -80,6 +80,12 @@ public abstract class AbstractProxyInvoker<T> implements Invoker<T> {
 
     @Override
     public Result invoke(Invocation invocation) throws RpcException {
+        /**
+         * 这个方法是 interface Invoker的接口方法，所有的 Invoke类都会调用的到这方法，
+         * 然后紧接着调用 doInvoke（....）,实际调用的是子类的方法，它的子类是一个AbstractProxyInvoker匿名内部类
+         * 紧接着调用了 Wrapper.invokeMethod（....）
+         * 在Wrapper里，最终又调用了真实 服务的的方法，也就是 GreeetingServiceImpl的方法
+         */
         try {
             Object value = doInvoke(proxy, invocation.getMethodName(), invocation.getParameterTypes(), invocation.getArguments());
 			CompletableFuture<Object> future = wrapWithFuture(value);

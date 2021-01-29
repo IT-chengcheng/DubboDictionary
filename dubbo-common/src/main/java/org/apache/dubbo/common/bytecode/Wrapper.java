@@ -122,6 +122,7 @@ public abstract class Wrapper {
          * 1、以 入参接口c = GreetingService为例，生成的代理类是
          * org.apache.dubbo.common.bytecode.Wrapper0  extends Wrapper
          * 这个虚拟代理类，我已经手敲打了一遍，放入工程里了，找一下看看 org.apache.dubbo.common.bytecode.Wrapper0
+         *    SPI-adaptive生成的代理类 见dubbo-demo-chengcheng工程
          * 2、JDK动态代理生成的虚拟类，也整理了，放在本类的同级包下
          * 3、CGLib 动态代理：动态字节码生成。使用动态字节码生成技术实现AOP原理是在运行期间目标字节码加载后，
          *            生成目标类的子类，将切面逻辑加入到子类中，所以使用Cglib实现AOP不需要基于接口。

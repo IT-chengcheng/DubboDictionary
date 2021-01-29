@@ -26,4 +26,19 @@ public class GreetingServiceImpl implements GreetingService {
     public String hello() {
         return "成成 Greetings!";
     }
+
+    @Override
+    public void haveNoReturn() {
+
+    }
+
+    @Override
+    public void setTestgaga(String name) {
+
+    }
+
+    @Override
+    public String getTestddd(String name) {
+        return null;
+    }
 }

@@ -387,4 +387,15 @@ public final class ClassGenerator {
     public static interface DC {
 
     } // dynamic class tag interface.
+
+    @Override
+    public String toString() {
+        return mClassName + "\n"
+                + mSuperClass + "\n"
+                + mInterfaces + "\n"
+                + mFields + "\n"
+                + mConstructors + "\n"
+                + mMethods + "\n";
+    }
+
 }

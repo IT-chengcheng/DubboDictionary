@@ -206,7 +206,7 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
         } else {
             doExport();
         }
-
+        // 经过上面的 doExport（），单个服务已经导出完毕，下面触发单个服务导出完毕事件
         exported();
     }
 
@@ -239,7 +239,7 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
         if (StringUtils.isEmpty(interfaceName)) {
             throw new IllegalStateException("<dubbo:service interface=\"\" /> interface not allow null!");
         }
-
+        // 检测 ref 是否为泛化服务类型
         if (ref instanceof GenericService) {
             interfaceClass = GenericService.class;
             if (StringUtils.isEmpty(generic)) {
@@ -252,16 +252,19 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
             } catch (ClassNotFoundException e) {
                 throw new IllegalStateException(e.getMessage(), e);
             }
+            // 对 interfaceClass，以及 <dubbo:method> 标签中的必要字段进行检查
             checkInterfaceAndMethods(interfaceClass, getMethods());
             checkRef();
             generic = Boolean.FALSE.toString();
         }
+        // local 和 stub 在功能应该是一致的，用于配置本地存根
         if (local != null) {
-            if ("true".equals(local)) {
+            if ("true".equals(local)) { // 如果配置的事true，那么默认类名就是 接口名拼接Local
                 local = interfaceName + "Local";
             }
             Class<?> localClass;
             try {
+                // 获取本地存根类
                 localClass = ClassUtils.forNameWithThreadContextClassLoader(local);
             } catch (ClassNotFoundException e) {
                 throw new IllegalStateException(e.getMessage(), e);
@@ -270,6 +273,7 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
                 throw new IllegalStateException("The local implementation class " + localClass.getName() + " not implement interface " + interfaceName);
             }
         }
+        // 逻辑同上
         if (stub != null) {
             if ("true".equals(stub)) {
                 stub = interfaceName + "Stub";
@@ -308,24 +312,35 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
 
     @SuppressWarnings({"unchecked", "rawtypes"})
     private void doExportUrls() {
+        // 需要注册服务的一个本地仓库，也就是本地存储一份服务
         ServiceRepository repository = ApplicationModel.getServiceRepository();
+        // 见名知意，就是一个服务描述符，里面有： 接口的名，方法数组，以及参数等等
         ServiceDescriptor serviceDescriptor = repository.registerService(getInterfaceClass());
         repository.registerProvider(
-                getUniqueServiceName(),
-                ref,
+                getUniqueServiceName(),// group/接口名：版本号  -> "greeting/org.apache.dubbo.demo.GreetingService:1.0.0"
+                ref, // 接口实现类 GreetingServiceImpl
                 serviceDescriptor,
-                this,
+                this, // ServiceBean
                 serviceMetadata
         );
         // 加载注册中心链接
+        /**
+         * 单个 URL -> registry://127.0.0.1:2181/org.apache.dubbo.registry.RegistryService?application=demo-provider
+         *              &dubbo=2.0.2&id=registry1&mapping-type=metadata&mapping.type=metadata&pid=10000&qos.port=22222
+         *              &registry=zookeeper&timestamp=1611892414279
+         * 由此分析呢：协议的路径 就是执行动作的类
+         */
         List<URL> registryURLs = ConfigValidationUtils.loadRegistries(this, true);
 
         // 遍历 protocols，并在每个协议下导出服务
+        // ProtocolConfig里面就是单个通信协议的各种属性，比如 dubbo，http等
         for (ProtocolConfig protocolConfig : protocols) {
+            //  pathKey -> greeting/org.apache.dubbo.demo.GreetingService:1.0.0
             String pathKey = URL.buildKey(getContextPath(protocolConfig)
-                    .map(p -> p + "/" + path)
+                    .map(p -> p + "/" + path) // path  -> org.apache.dubbo.demo.GreetingService
                     .orElse(path), group, version);
             // In case user specified path, register service one more time to map it to path.
+            // interfaceClass 就是要暴露的接口  -> interface  org.apache.dubbo.demo.GreetingService
             repository.registerService(pathKey, interfaceClass);
             // TODO, uncomment this line once service key is unified   /ˈjuːnɪfaɪd/ 统一的；一致标准的
             serviceMetadata.setServiceKey(pathKey);
@@ -335,6 +350,14 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
     }
 
     private void doExportUrlsFor1Protocol(ProtocolConfig protocolConfig, List<URL> registryURLs) {
+        /**
+         * List<URL> registryURLs
+         * 单个 URL -> registry://127.0.0.1:2181/org.apache.dubbo.registry.RegistryService?application=demo-provider
+         *              &dubbo=2.0.2&id=registry1&mapping-type=metadata&mapping.type=metadata&pid=10000&qos.port=22222
+         *              &registry=zookeeper&timestamp=1611892414279
+         * 由此分析呢：协议的路径 就是执行动作的类
+         */
+
         String name = protocolConfig.getName();
         if (StringUtils.isEmpty(name)) {
             // 如果协议名为空，或空串，则将协议名变量设置为 dubbo
@@ -446,7 +469,10 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
             if (revision != null && revision.length() > 0) {
                 map.put(REVISION_KEY, revision);
             }
-            // 为接口生成包裹类 Wrapper，Wrapper 中包含了接口的详细信息，比如接口方法名数组，字段信息等
+            /**
+             * 为接口生成包裹类 Wrapper ,Wrapper就是interface的一个动态代理，类似于 mybatis的mapper也会生成一个
+             * 只不过Dubbo用的是自己的动态代理，mybatis用的是JDK动态代理
+             */
             String[] methods = Wrapper.getWrapper(interfaceClass).getMethodNames();
             if (methods.length == 0) {
                 // 添加方法名到 map 中，如果包含多个方法名，则用逗号隔开，比如 method = init,destroy

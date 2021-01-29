@@ -181,7 +181,7 @@ public class DubboBootstrap extends GenericEventListener {
     private volatile MetadataService metadataService;
 
     private volatile MetadataServiceExporter metadataServiceExporter;
-
+    // 存放所有注册到 zk 的服务
     private List<ServiceConfigBase<?>> exportedServices = new ArrayList<>();
 
     private List<Future<?>> asyncExportingFutures = new ArrayList<>();
@@ -888,6 +888,7 @@ public class DubboBootstrap extends GenericEventListener {
     public DubboBootstrap start() {
         if (started.compareAndSet(false, true)) {
             ready.set(false);
+            //各种初始化操作：配置中心，添加监听器等
             initialize();
             if (logger.isInfoEnabled()) {
                 logger.info(NAME + " is starting...");
@@ -1073,9 +1074,45 @@ public class DubboBootstrap extends GenericEventListener {
         }
     }
 
+    /**
+     * 服务概念的演化：
+     1. DemoService接口表示一个服务，此时的服务表示服务定义
+     2. DemoServiceImpl表示DemoService服务的具体实现，此时的服务表示服务的具体实现
+     3. DemoService+group+version表示一个服务，此时的服务增加了分组和版本概念
+     4. http://127.0.0.1:80/com.test.DemoService表示一个服务，此时的服务增加了机器IP和Port，表示远程机器可以访问这个URL来使用com.luban.DemoService这个服务
+     5. http://127.0.0.1:80/com.test.DemoService?timeout=3000&version=1.0.1&application=dubbo-demo-provider-application表示一个服务，此时的服务是拥有参数的，比如超时时间、版本号、所属应用
+     在dubbo中就是用的最后一种方式来表示服务的。\
+
+     服务导出要做的几件事情：
+     1. 确定服务的参数
+     2. 确定服务支持的协议
+     3. 构造服务最终的URL
+     4. 将服务URL注册到注册中心去
+     5. 根据服务支持的不同协议，启动不同的Server，用来接收和处理请求
+     6. 因为Dubbo支持动态配置服务参数，所以服务导出时还需要绑定一个监听器Listener来监听服务的参数是否有修改，如果发现有修改，则需要重新进行导出
+
+     Dubbo中，除开可以在@DubboService注解中给服务配置参数，还有很多地方也可以给服务配置参数，比如：
+     1. dubbo.properties文件，你可以建立这个文件，dubbo会去读取这个文件的内容作为服务的参数，Dubob的源码中叫做PropertiesConfiguration
+     2. 配置中心，dubbo在2.7版本后就支持了分布式配置中心，你可以在Dubbo-Admin中去操作配置中心，
+            分布式配置中心就相当于一个远程的dubbo.properties文件，你可以在Dubbo-Admin中去修改这个dubbo.properties文件，
+               当然配置中心支持按应用进行配置，也可以按全局进行配置两种，在Dubbo的源码中AppExternalConfiguration表示应用配置，
+              ExternalConfiguration表示全局配置。
+     3. 系统环境变量，你可以在启动应用程序时，通过-D的方式来指定参数，在Dubbo的源码中叫SystemConfiguration
+     4. 再加上通过@DubboService注解所配置的参数，在Dubbo的源码中叫AbstractConfig
+     5. 服务的参数可以从这四个位置来，这四个位置上如果配了同一个参数的话，优先级从高到低如下：
+     SystemConfiguration -> AppExternalConfiguration -> ExternalConfiguration -> AbstractConfig -> PropertiesConfiguration
+
+     在服务导出时，首先得确定服务的参数。
+     当然，服务的参数除开来自于服务的自身配置外，还可以来自其上级。
+     比如如果服务本身没有配置timeout参数，但是如果服务所属的应用的配置了timeout，那么这个应用下的服务都会继承这个timeout配置。
+     所以在确定服务参数时，需要先从上级获取参数，获取之后，如果服务本身配置了相同的参数，那么则进行覆盖。
+     */
     private void exportServices() {
+        // ServiceConfig的数据来源是，ServiceBean 的最终父类 AbstractConfig 的加了 @PostConstruct 注解的方法
         configManager.getServices().forEach(sc -> {
-            // TODO, compatible with ServiceConfig.export()
+            // TODO, compatible /kəmˈpætəbl/  兼容的；能共处的 with ServiceConfig.export()
+            //ServiceConfig对象就是一个服务，我们已经知道了这个服务的名字（就是接口的名字），并且此时这个服务可能已经有一些参数了，
+            // 就是@DubboService注解上所定义的参数
             ServiceConfig serviceConfig = (ServiceConfig) sc;
             serviceConfig.setBootstrap(this);
 

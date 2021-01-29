@@ -127,6 +127,7 @@ public abstract class AbstractEventDispatcher implements EventDispatcher {
                             }
                         }
                         // Handle the event
+                        // 进入 父类 DubboBootstrap extends GenericEventListener
                         listener.onEvent(event);
                     });
         });

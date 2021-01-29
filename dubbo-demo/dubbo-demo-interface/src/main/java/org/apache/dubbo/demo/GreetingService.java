@@ -21,4 +21,7 @@ package org.apache.dubbo.demo;
  */
 public interface GreetingService {
     String hello();
+    void haveNoReturn();
+    void setTestgaga(String name);
+    String getTestddd(String name);
 }

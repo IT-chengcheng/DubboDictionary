@@ -10,7 +10,7 @@ public class ProxyFactory$Adaptive implements org.apache.dubbo.rpc.ProxyFactory 
         org.apache.dubbo.common.URL url = arg0.getUrl();
         String extName = url.getParameter("proxy", "javassist");
         if (extName == null)
-            throw new IllegalStateException("Failed to get extension (org.apache.dubbo.rpc.ProxyFactory) name from url (" + url.toString() + ") use keys([proxy])");
+            throw new IllegalStateException("Failed to get extension (org.apache.dubbo.rpc.ProxyFactory) name from url (" + url.toString() + ") use keys([proxy]).");
         org.apache.dubbo.rpc.ProxyFactory extension = (org.apache.dubbo.rpc.ProxyFactory) ExtensionLoader.getExtensionLoader(org.apache.dubbo.rpc.ProxyFactory.class).getExtension(extName);
         return extension.getProxy(arg0);
     }

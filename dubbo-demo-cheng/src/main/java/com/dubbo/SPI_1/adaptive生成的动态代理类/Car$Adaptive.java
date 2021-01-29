@@ -14,6 +14,6 @@ public class Car$Adaptive implements com.dubbo.SPI_1.api.Car {
     }
 
     public void getColor() {
-        throw new UnsupportedOperationException("The method public abstract void com.dubbo.SPI_1.api.Car.getColor() of interface com.dubbo.SPI_1.api.Car is not adaptive method!");
+        throw new UnsupportedOperationException("The method public abstract void com.dubbo.SPI_1.api.Car.getColor() of interface com.dubbo.SPI_1.api.Car is not adaptive method!.");
     }
 }

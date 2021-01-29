@@ -89,3 +89,6 @@ public class Wrapper0 extends org.apache.dubbo.common.bytecode.Wrapper
         throw new org.apache.dubbo.common.bytecode.NoSuchMethodException("Not found method \"" + n + "\" in class org.apache.dubbo.demo.GreetingService.");
     }
 }
+/**
+ * 此类是由Dubbo动态生成的类，并不可见，这里只是从内存中导出来而已
+ */

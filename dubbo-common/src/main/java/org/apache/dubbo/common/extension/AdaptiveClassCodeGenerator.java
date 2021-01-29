@@ -95,6 +95,8 @@ public class AdaptiveClassCodeGenerator {
             throw new IllegalStateException("No adaptive method exist on extension " + type.getName() + ", refuse to create the adaptive class!");
         }
 
+        // 生成的代理类具体长啥样？见 dubbo-demo-cheng 工程
+
         StringBuilder code = new StringBuilder();
         // 会生成 package 语句
         code.append(generatePackageInfo());

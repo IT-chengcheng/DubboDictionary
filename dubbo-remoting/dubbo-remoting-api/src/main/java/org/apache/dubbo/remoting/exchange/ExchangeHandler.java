@@ -29,7 +29,7 @@ public interface ExchangeHandler extends ChannelHandler, TelnetHandler {
 
     /**
      * reply.
-     *
+     * 真正开始 执行 GreetingServiceImpl 方法
      * @param channel
      * @param request
      * @return response

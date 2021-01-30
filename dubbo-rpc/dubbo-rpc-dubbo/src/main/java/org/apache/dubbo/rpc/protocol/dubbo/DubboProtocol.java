@@ -104,9 +104,11 @@ public class DubboProtocol extends AbstractProtocol {
     private final Map<String, List<ReferenceCountExchangeClient>> referenceClientMap = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, Object> locks = new ConcurrentHashMap<>();
     private final Set<String> optimizers = new ConcurrentHashSet<>();
-
+    // 超级重要的匿名内部类，provider接收到consumer请求后，最终调用的就是这里
     private ExchangeHandler requestHandler = new ExchangeHandlerAdapter() {
-
+        /**
+         *  这个reply（）方法就是最终触发 provider 接口实现方法的入口：执行 GreetingServiceImpl 方法
+         */
         @Override
         public CompletableFuture<Object> reply(ExchangeChannel channel, Object message) throws RemotingException {
 

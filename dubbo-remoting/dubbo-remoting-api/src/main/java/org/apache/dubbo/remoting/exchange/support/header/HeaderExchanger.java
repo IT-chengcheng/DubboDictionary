@@ -45,6 +45,11 @@ public class HeaderExchanger implements Exchanger {
         //   1. new HeaderExchangeHandler(handler)
         //	 2. new DecodeHandler(new HeaderExchangeHandler(handler))
         //   3. Transporters.bind(url, new DecodeHandler(new HeaderExchangeHandler(handler)))
+        /**
+         * 入参 handler 是 DubboProtocol 的匿名内部类 ExchangeHandler requestHandler，是个成员变量，非常重要！！
+         *  经过这里 构造方法的 三层包装，处理客户端读事件的的顺序就是
+         *  DecodeHandler -> HeaderExchangeHandler -> handler
+         */
         return new HeaderExchangeServer(Transporters.bind(url, new DecodeHandler(new HeaderExchangeHandler(handler))));
     }
 

@@ -610,7 +610,8 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
                          * 导出服务到本地相比，导出服务到远程的过程要复杂不少，
                          * 其包含了服务导出与服务注册两个过程
                          * PROTOCOL.export(wrapperInvoker) 这行代码呢，根据dubbo-spi机制，会先 url= wrapperInvoker.getUrl(),
-                         * 然后 RegistryProtocol p = url.getProtocol(),所以呢 进入RegistryProtocol的export（）方法
+                         * 然后 Protocol p = url.getProtocol(),根据duboo-spi的 wrapper机制
+                         * p = ProtocolFilterWrapper(ProtocolListenerWrapper(RegistryProtocol))
                          */
                         Exporter<?> exporter = PROTOCOL.export(wrapperInvoker);
                         exporters.add(exporter);

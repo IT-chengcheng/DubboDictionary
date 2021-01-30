@@ -309,7 +309,7 @@ public class DubboProtocol extends AbstractProtocol {
 
             }
         }
-        // 启动服务器
+        // 启动服务器。
         openServer(url);
         // 优化序列化
         optimizeSerialization(url);
@@ -367,7 +367,7 @@ public class DubboProtocol extends AbstractProtocol {
 
         ExchangeServer server;
         try {
-            // 创建 ExchangeServer
+            // 创建 ExchangeServer,注意入参  requestHandler，看一下成员变量的解释
             server = Exchangers.bind(url, requestHandler);
         } catch (RemotingException e) {
             throw new RpcException("Fail to start server(url: " + url + ") " + e.getMessage(), e);

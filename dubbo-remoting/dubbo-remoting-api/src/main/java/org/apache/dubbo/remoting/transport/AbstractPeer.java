@@ -28,6 +28,9 @@ import org.apache.dubbo.remoting.RemotingException;
  */
 public abstract class AbstractPeer implements Endpoint, ChannelHandler {
 
+    /**
+     * 这是Dubbo自定义的 handler，跟netty的handler没关系
+     */
     private final ChannelHandler handler;
 
     private volatile URL url;

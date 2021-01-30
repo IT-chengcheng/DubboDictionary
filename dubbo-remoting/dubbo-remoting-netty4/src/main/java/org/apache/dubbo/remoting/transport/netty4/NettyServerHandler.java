@@ -46,7 +46,8 @@ public class NettyServerHandler extends ChannelDuplexHandler {
     private final Map<String, Channel> channels = new ConcurrentHashMap<String, Channel>();
 
     private final URL url;
-
+   // 此handler 传入的 dubbo自定义的handler,层层包裹
+    // NettyServer(MultiMessageHandler(HeartbeatHandler(AllChannelHandler(DecodeHandler(HeaderExchangeHandler(DubboProtocol$1@3293))))))
     private final ChannelHandler handler;
 
     public NettyServerHandler(URL url, ChannelHandler handler) {
@@ -57,6 +58,11 @@ public class NettyServerHandler extends ChannelDuplexHandler {
             throw new IllegalArgumentException("handler == null");
         }
         this.url = url;
+        /**
+         * 这个 NettyServerHandler 是 继承的 netty的 ChannelDuplexHandler，即是入栈又是出栈处理器
+         * 传进来的这个入参，是 NettyServer，是Dubbo自己的hanlder，跟netty没关系
+         * NettyServer(MultiMessageHandler(HeartbeatHandler(AllChannelHandler(DecodeHandler(HeaderExchangeHandler(DubboProtocol$1@3293))))))
+         */
         this.handler = handler;
     }
 
@@ -94,6 +100,9 @@ public class NettyServerHandler extends ChannelDuplexHandler {
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+        // 经过了netty的一堆handler后，到达这里，从这里开始一步步执行Dubbo自己的handler
+        // handler = NettyServer(MultiMessageHandler(HeartbeatHandler(AllChannelHandler(DecodeHandler(HeaderExchangeHandler(DubboProtocol$1@3293))))))
+        // 需要特别注意的是：有可能执行的是父类的方法，比如NettyServer extends AbstractPeer
         NettyChannel channel = NettyChannel.getOrAddChannel(ctx.channel(), url, handler);
         handler.received(channel, msg);
     }

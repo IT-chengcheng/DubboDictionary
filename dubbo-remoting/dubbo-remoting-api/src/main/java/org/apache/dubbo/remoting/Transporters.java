@@ -59,6 +59,7 @@ public class Transporters {
          * getTransporter() 方法获取的 Transporter 是在运行时动态创建的，类名为 Transporter$Adaptive，也就是自适应拓展类。
          * Transporter$Adaptive 会在运行时根据传入的 URL 参数决定加载什么类型的 Transporter，默认为 NettyTransporter。
          * 下面我们继续跟下去，这次分析的是 NettyTransporter 的 bind 方法
+         * 此时的handler 是 DecodeHandler 拥有属性 HeaderExchangeHandler （拥有属性 DubboProtocol的匿名内部类ExchangeHandler ）
          */
         return getTransporter().bind(url, handler);
     }

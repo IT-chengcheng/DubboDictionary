@@ -57,8 +57,16 @@ public class AllChannelHandler extends WrappedChannelHandler {
 
     @Override
     public void received(Channel channel, Object message) throws RemotingException {
+        /**
+         *  重点来了，这里得到是个共享线程池，也就是说 dubbo会开启一个 线程池 用来处理 客户端发来的消息
+         *  线程池核心线程数量是200，最大线程数量也是200
+         */
         ExecutorService executor = getPreferredExecutorService(message);
         try {
+            /**
+             *  ChannelEventRunnable implements Runnable
+             *  ChannelEventRunnable是个线程
+             */
             executor.execute(new ChannelEventRunnable(channel, handler, ChannelState.RECEIVED, message));
         } catch (Throwable t) {
         	if(message instanceof Request && t instanceof RejectedExecutionException){

@@ -121,6 +121,7 @@ public class WrappedChannelHandler implements ChannelHandlerDelegate {
                 return executor;
             }
         } else {
+            // 获取共享线程池，也就是说 所有的业务处理都会用这个线程池
             return getSharedExecutorService();
         }
     }
@@ -131,8 +132,11 @@ public class WrappedChannelHandler implements ChannelHandlerDelegate {
      * @return
      */
     public ExecutorService getSharedExecutorService() {
+
+        // executorRepository -> DefaultExecutorRepository
         ExecutorRepository executorRepository =
                 ExtensionLoader.getExtensionLoader(ExecutorRepository.class).getDefaultExtension();
+        // 创建线程池   核心线程池数量 200，最大线程池数量也是 200
         ExecutorService executor = executorRepository.getExecutor(url);
         if (executor == null) {
             executor = executorRepository.createExecutorIfAbsent(url);

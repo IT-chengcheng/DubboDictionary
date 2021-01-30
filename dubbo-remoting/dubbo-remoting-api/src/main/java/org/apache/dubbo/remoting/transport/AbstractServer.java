@@ -47,6 +47,9 @@ public abstract class AbstractServer extends AbstractEndpoint implements Remotin
 
     protected static final String SERVER_THREAD_POOL_NAME = "DubboServerHandler";
     private static final Logger logger = LoggerFactory.getLogger(AbstractServer.class);
+    /**
+     * 用来处理业务的线程池，核心线程数是200，最大线程数是 200
+     */
     ExecutorService executor;
     private InetSocketAddress localAddress;
     private InetSocketAddress bindAddress;
@@ -72,7 +75,8 @@ public abstract class AbstractServer extends AbstractEndpoint implements Remotin
         // 默认是长连接 ，最大闲置是 60* 1000,也就是 10分钟内 consumer-provider没做交互的话，就断开连接
         this.idleTimeout = url.getParameter(IDLE_TIMEOUT_KEY, DEFAULT_IDLE_TIMEOUT);
         try {
-            // 调用模板方法 doOpen 启动服务器
+            // 调用模板方法 doOpen 启动服务器，Init and start netty server
+            // 看最后面，开始创建处理业务的线程池啦！！！！
             doOpen();
             if (logger.isInfoEnabled()) {
                 logger.info("Start " + getClass().getSimpleName() + " bind " + getBindAddress() + ", export " + getLocalAddress());
@@ -81,6 +85,10 @@ public abstract class AbstractServer extends AbstractEndpoint implements Remotin
             throw new RemotingException(url.toInetSocketAddress(), null, "Failed to bind " + getClass().getSimpleName()
                     + " on " + getLocalAddress() + ", cause: " + t.getMessage(), t);
         }
+        /**
+         * 重点来啦，开始创建业务线程池啦！！！
+         * executorRepository -> DefaultExecutorRepository
+         */
         executor = executorRepository.createExecutorIfAbsent(url);
     }
 

@@ -77,6 +77,10 @@ public class DefaultExecutorRepository implements ExecutorRepository {
         }
         Map<Integer, ExecutorService> executors = data.computeIfAbsent(componentKey, k -> new ConcurrentHashMap<>());
         Integer portKey = url.getPort();
+        /**
+         * 重点来了，这里就开始创建 用来处理业务的 线程池！！
+         *   ->   createExecutor(url)
+         */
         ExecutorService executor = executors.computeIfAbsent(portKey, k -> createExecutor(url));
         // If executor has been shut down, create a new one
         if (executor.isShutdown() || executor.isTerminated()) {
@@ -92,10 +96,14 @@ public class DefaultExecutorRepository implements ExecutorRepository {
         if (CONSUMER_SIDE.equalsIgnoreCase(url.getParameter(SIDE_KEY))) {
             componentKey = CONSUMER_SIDE;
         }
+        /**
+         * data里存储着 之前创建好的线程池，怎么存的？ 看下面的英文解释！！！
+         */
         Map<Integer, ExecutorService> executors = data.get(componentKey);
 
         /**
-         * It's guaranteed that this method is called after {@link #createExecutorIfAbsent(URL)}, so data should already
+         * It's guaranteed  /ˌɡærənˈtiːd/ 确保 that this method is called after {@link #createExecutorIfAbsent(URL)},
+         * so data should already
          * have Executor instances generated and stored.
          */
         if (executors == null) {
@@ -105,6 +113,9 @@ public class DefaultExecutorRepository implements ExecutorRepository {
         }
 
         Integer portKey = url.getPort();
+        /**
+         * 从缓存中取出业务线程池，核心线程池数量 200，最大线程池数量也是 200
+         */
         ExecutorService executor = executors.get(portKey);
         if (executor != null) {
             if (executor.isShutdown() || executor.isTerminated()) {
@@ -160,6 +171,12 @@ public class DefaultExecutorRepository implements ExecutorRepository {
     }
 
     private ExecutorService createExecutor(URL url) {
+        /**
+         * 创建线程池，处理业务的线程池，也就是处理客户端发来的消息的线程池
+         * ThreadPool 是Dubbo的自己的接口，默认实现类是 FixedThreadPool
+         * 可以自定义创建线程池的类，通过Dubbo的SPI机制   参数是 threadpool，比如：
+         * dubbo://127.0.0.1:20880?xxxxxx&threadpool=value，这个value就是Dubbo-spi机制的配置文件中的key
+         */
         return (ExecutorService) ExtensionLoader.getExtensionLoader(ThreadPool.class).getAdaptiveExtension().getExecutor(url);
     }
 

@@ -239,6 +239,7 @@ public class RegistryProtocol implements Protocol {
         // url to registry
         // 根据 URL 加载 Registry 实现类，里面有很多spi机制使用，最终得到 ：比如 ZookeeperRegistry
         // 但是 外面加了一层wrapper，所以最终 registry =  ListenerRegistryWrapper
+        // 同时会注册监听事件！！！！！
         final Registry registry = getRegistry(originInvoker);
         // dubbo://192.168.1.103:20880/org.apache.dubbo.demo.GreetingService?anyhost=true&application=demo-provider&deprecated=false&dubbo=2.0.2&dynamic=true&generic=false&group=greeting&interface=org.apache.dubbo.demo.GreetingService&mapping-type=metadata&mapping.type=metadata&metadata-type=remote&methods=haveNoReturn,setTestgaga,getTestddd,hello&pid=2188&release=&revision=1.0.0&side=provider&timeout=5000&timestamp=1611975477170&version=1.0.0
         final URL registeredProviderUrl = getUrlToRegistry(providerUrl, registryUrl);
@@ -262,7 +263,7 @@ public class RegistryProtocol implements Protocol {
         exporter.setSubscribeUrl(overrideSubscribeUrl);
 
         // Deprecated! Subscribe to override rules in 2.6.x or before.
-        // 向注册中心进行订阅 override 数据
+        // 向注册中心进行订阅 override 数据.
         registry.subscribe(overrideSubscribeUrl, overrideSubscribeListener);
 
         notifyExport(exporter);
@@ -412,7 +413,8 @@ public class RegistryProtocol implements Protocol {
          *           &export=dubbo%3A%2F%2F192.168.1.103%3A20880%2Forg.apache.dubbo.demo.GreetingService%3Fanyhost%3Dtrue%26application%3Ddemo-provider%26bind.ip%3D192.168.1.103%26bind.port%3D20880%26deprecated%3Dfalse%26dubbo%3D2.0.2%26dynamic%3Dtrue%26generic%3Dfalse%26group%3Dgreeting%26interface%3Dorg.apache.dubbo.demo.GreetingService%26mapping-type%3Dmetadata%26mapping.type%3Dmetadata%26metadata-type%3Dremote%26methods%3DhaveNoReturn%2CsetTestgaga%2CgetTestddd%2Chello%26pid%3D1092%26qos.port%3D22222%26release%3D%26revision%3D1.0.0%26side%3Dprovider%26timeout%3D5000%26timestamp%3D1611974170990%26version%3D1.0.0&id=registry1&mapping-type=metadata&mapping.type=metadata&pid=1092&qos.port=22222&timestamp=1611974170984
          */
         // 根据 SPI机制，找到 ZookeeperRegistryFactory extends AbstractRegistryFactory
-        // ,所以会进入 ZookeeperRegistryFactory 的 父类的  getRegistry（）
+        // 外面还有一层wrapper,但是最终会进入 ZookeeperRegistryFactory 的 父类的  getRegistry（）
+        // 同时会注册监听事件！！！！！
         return registryFactory.getRegistry(registryUrl);
     }
 

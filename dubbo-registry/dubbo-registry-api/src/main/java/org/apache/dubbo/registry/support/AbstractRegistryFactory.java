@@ -133,7 +133,7 @@ public abstract class AbstractRegistryFactory implements RegistryFactory {
             }
             //create registry by spi/ioc
             // 缓存未命中，创建 Registry 实例,
-            // 本类有很多子类，我们以ZookeeperRegistryFactory 为例
+            // 本类有很多子类，我们以ZookeeperRegistryFactory 为例.
             registry = createRegistry(url);
             if (registry == null) {
                 throw new IllegalStateException("Can not create registry " + url);

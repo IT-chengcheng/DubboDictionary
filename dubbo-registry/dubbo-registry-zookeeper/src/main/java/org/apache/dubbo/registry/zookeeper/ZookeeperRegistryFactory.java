@@ -40,7 +40,7 @@ public class ZookeeperRegistryFactory extends AbstractRegistryFactory {
 
     @Override
     public Registry createRegistry(URL url) {
-        // 创建 ZookeeperRegistry
+        // 创建 ZookeeperRegistry,同时会注册监听事件
         return new ZookeeperRegistry(url, zookeeperTransporter);
     }
 

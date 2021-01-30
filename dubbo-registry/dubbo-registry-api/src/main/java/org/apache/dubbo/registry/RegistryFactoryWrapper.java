@@ -31,6 +31,8 @@ public class RegistryFactoryWrapper implements RegistryFactory {
 
     @Override
     public Registry getRegistry(URL url) {
+        // 同时会注册监听事件！！！！！
+        // registryFactory.getRegistry(url) 进入 ZookeeperRegistryFactory extends AbstractRegistryFactory
         return new ListenerRegistryWrapper(registryFactory.getRegistry(url),
                 Collections.unmodifiableList(ExtensionLoader.getExtensionLoader(RegistryServiceListener.class)
                         .getActivateExtension(url, "registry.listeners")));

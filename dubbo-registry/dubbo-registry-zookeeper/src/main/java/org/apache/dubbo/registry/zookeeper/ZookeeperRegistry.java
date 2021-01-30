@@ -91,7 +91,7 @@ public class ZookeeperRegistry extends FailbackRegistry {
          * 默认为 CuratorZookeeperTransporter
          */
         zkClient = zookeeperTransporter.connect(url);
-        // 添加状态监听器
+        // 添加状态监听器.
         zkClient.addStateListener((state) -> {
             if (state == StateListener.RECONNECTED) {
                 logger.warn("Trying to fetch the latest urls, in case there're provider changes during connection loss.\n" +
@@ -176,6 +176,7 @@ public class ZookeeperRegistry extends FailbackRegistry {
                         }
                     }
                 });
+                //
                 zkClient.create(root, false);
                 List<String> services = zkClient.addChildListener(root, zkListener);
                 if (CollectionUtils.isNotEmpty(services)) {

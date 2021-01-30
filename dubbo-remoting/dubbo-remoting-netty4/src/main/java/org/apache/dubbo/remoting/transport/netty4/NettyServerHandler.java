@@ -103,6 +103,7 @@ public class NettyServerHandler extends ChannelDuplexHandler {
         // 经过了netty的一堆handler后，到达这里，从这里开始一步步执行Dubbo自己的handler
         // handler = NettyServer(MultiMessageHandler(HeartbeatHandler(AllChannelHandler(DecodeHandler(HeaderExchangeHandler(DubboProtocol$1@3293))))))
         // 需要特别注意的是：有可能执行的是父类的方法，比如NettyServer extends AbstractPeer
+        // 到达AllChannelHandler后，开启了业务线程池
         NettyChannel channel = NettyChannel.getOrAddChannel(ctx.channel(), url, handler);
         handler.received(channel, msg);
     }

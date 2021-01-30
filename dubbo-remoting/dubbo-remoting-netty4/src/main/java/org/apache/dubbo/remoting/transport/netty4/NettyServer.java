@@ -120,7 +120,7 @@ public class NettyServer extends AbstractServer implements RemotingServer {
                                 .addLast("handler", nettyServerHandler);
                     }
                 });
-        // bind 绑定到指定的 ip 和端口上
+        // bind 绑定到指定的 ip 和端口上.
         ChannelFuture channelFuture = bootstrap.bind(getBindAddress());
         channelFuture.syncUninterruptibly();
         channel = channelFuture.channel();

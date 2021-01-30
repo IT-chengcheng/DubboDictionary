@@ -37,6 +37,7 @@ public final class DubboCountCodec implements Codec2 {
 
     @Override
     public void encode(Channel channel, ChannelBuffer buffer, Object msg) throws IOException {
+        //  codec = new DubboCodec();
         codec.encode(channel, buffer, msg);
     }
 
@@ -45,6 +46,7 @@ public final class DubboCountCodec implements Codec2 {
         int save = buffer.readerIndex();
         MultiMessage result = MultiMessage.create();
         do {
+            //  codec = new DubboCodec();
             Object obj = codec.decode(channel, buffer);
             if (Codec2.DecodeResult.NEED_MORE_INPUT == obj) {
                 buffer.readerIndex(save);

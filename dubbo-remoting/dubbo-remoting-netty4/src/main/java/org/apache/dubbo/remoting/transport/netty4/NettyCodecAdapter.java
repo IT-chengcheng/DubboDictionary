@@ -60,18 +60,19 @@ final public class NettyCodecAdapter {
     }
 
     private class InternalEncoder extends MessageToByteEncoder {
-
+        // dubbo自定的编码器
         @Override
         protected void encode(ChannelHandlerContext ctx, Object msg, ByteBuf out) throws Exception {
             org.apache.dubbo.remoting.buffer.ChannelBuffer buffer = new NettyBackedChannelBuffer(out);
             Channel ch = ctx.channel();
             NettyChannel channel = NettyChannel.getOrAddChannel(ch, url, handler);
+            // codec  -> DubboCountCodec
             codec.encode(channel, buffer, msg);
         }
     }
 
     private class InternalDecoder extends ByteToMessageDecoder {
-
+        // dubbo自定的解码器
         @Override
         protected void decode(ChannelHandlerContext ctx, ByteBuf input, List<Object> out) throws Exception {
 
@@ -82,6 +83,7 @@ final public class NettyCodecAdapter {
             // decode object.
             do {
                 int saveReaderIndex = message.readerIndex();
+                // codec  -> DubboCountCodec
                 Object msg = codec.decode(channel, message);
                 if (msg == Codec2.DecodeResult.NEED_MORE_INPUT) {
                     message.readerIndex(saveReaderIndex);

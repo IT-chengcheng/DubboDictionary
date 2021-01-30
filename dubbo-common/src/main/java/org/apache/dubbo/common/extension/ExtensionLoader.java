@@ -699,7 +699,7 @@ public class ExtensionLoader<T> {
         /**
          * Dubbo IOC 是通过 setter 方法注入依赖。Dubbo 首先会通过反射获取到实例的所有方法，然后再遍历方法列表，
          * 检测方法名是否具有 setter 方法特征。若有，则通过 ObjectFactory 获取依赖对象，
-         * 最后通过反射调用 setter 方法将依赖设置到目标对象中
+         * 最后通过反射调用 setter 方法将依赖设置到目标对象中.
          */
         if (objectFactory == null) {
             return instance;

@@ -1074,7 +1074,7 @@ public class ExtensionLoader<T> {
      * which has Constructor with given class type as its only argument
      */
     private boolean isWrapperClass(Class<?> clazz) {
-        try {
+        try { // wrapper类的判别标准
             clazz.getConstructor(type);
             return true;
         } catch (NoSuchMethodException e) {

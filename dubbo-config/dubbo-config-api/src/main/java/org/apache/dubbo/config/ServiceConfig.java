@@ -656,7 +656,7 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
         //            &methods=haveNoReturn,setTestgaga,getTestddd,hello&pid=3584&qos.port=22222&release=&revision=1.0.0&side=provider
         //            &timeout=5000&timestamp=1611925591427&version=1.0.0
         URL local = URLBuilder.from(url)
-                .setProtocol(LOCAL_PROTOCOL)   // 设置协议头为 injvm
+                .setProtocol(LOCAL_PROTOCOL)   // 设置协议头为 injvm.
                 .setHost(LOCALHOST_VALUE) // "127.0.0.1"
                 .setPort(0)
                 .build();

@@ -178,7 +178,9 @@ public class RegistryProtocol implements Protocol {
     }
 
     private void register(URL registryUrl, URL registeredProviderUrl) {
-        // 获取 Registry  获取注册中心实例      registryFactory->  AbstractRegistryFactory
+        // 获取 Registry  获取注册中心实例
+        // registryFactory->  AbstractRegistryFactory
+        // registry = ZookeeperRegistry extends FailbackRegistry
         Registry registry = registryFactory.getRegistry(registryUrl);
         // 注册服务  向注册中心注册服务
         // 所谓的服务注册，本质上是将服务配置数据写入到 Zookeeper(redis,nacos) 的某个路径的节点下
@@ -247,7 +249,7 @@ public class RegistryProtocol implements Protocol {
             // 向注册中心注册服务
             /**
              * 服务注册操作对于 Dubbo 来说不是必需的，通过服务直连的方式就可以绕过注册中心。
-             * 但通常我们不会这么做，直连方式不利于服务治理
+             * 但通常我们不会这么做，直连方式不利于服务治理.
              */
             register(registryUrl, registeredProviderUrl);
         }

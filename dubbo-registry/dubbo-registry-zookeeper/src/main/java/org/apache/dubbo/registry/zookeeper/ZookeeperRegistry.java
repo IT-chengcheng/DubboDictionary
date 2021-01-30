@@ -138,7 +138,12 @@ public class ZookeeperRegistry extends FailbackRegistry {
              *  通过 Zookeeper 客户端创建节点，节点路径由 toUrlPath 方法生成，路径格式如下:
              * /${group}/${serviceInterface}/providers/${url}
              *比如：
-             * /dubbo/org.apache.dubbo.DemoService/providers/dubbo%3A%2F%2F127.0.0.1......
+             * /dubbo/org.apache.dubbo.DemoService/providers/dubbo%3A%2F%2F127.0.0.1.......
+             */
+            /**
+             * url = dubbo://192.168.1.103:20880/org.apache.dubbo.demo.DemoService?anyhost=true&application=dubbo-demo-annotation-provider&deprecated=false&dubbo=2.0.2&dynamic=true&generic=false&interface=org.apache.dubbo.demo.DemoService&methods=sayHello,sayHelloAsync&pid=10868&release=&side=provider&timestamp=1612021114000
+             *
+             * toUrlPath(url) = xxx解码后 = dubbo://192.168.1.103:20880/org.apache.dubbo.demo.GreetingService?anyhost=true&application=demo-provider&bind.ip=192.168.1.103&bind.port=20880&deprecated=false&dubbo=2.0.2&dynamic=true&generic=false&group=greeting&interface=org.apache.dubbo.demo.GreetingService&mapping-type=metadata&mapping.type=metadata&metadata-type=remote&methods=haveNoReturn,setTestgaga,getTestddd,hello&pid=2188&qos.port=22222&release=&revision=1.0.0&side=provider&timeout=5000&timestamp=1611975477170&version=1.0.0&id=registry1&mapping-type=metadata&mapping.type=metadata&pid=2188&qos.port=22222&timestamp=1611975477162
              */
             zkClient.create(toUrlPath(url), url.getParameter(DYNAMIC_KEY, true));
         } catch (Throwable e) {

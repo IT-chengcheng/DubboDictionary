@@ -70,6 +70,8 @@ public abstract class AbstractZookeeperClient<TargetDataListener, TargetChildLis
 
     @Override
     public void create(String path, boolean ephemeral) {
+        // path = dubbo://192.168.1.103:20880/org.apache.dubbo.demo.GreetingService?anyhost=true&application=demo-provider&bind.ip=192.168.1.103&bind.port=20880&deprecated=false&dubbo=2.0.2&dynamic=true&generic=false&group=greeting&interface=org.apache.dubbo.demo.GreetingService&mapping-type=metadata&mapping.type=metadata&metadata-type=remote&methods=haveNoReturn,setTestgaga,getTestddd,hello&pid=2188&qos.port=22222&release=&revision=1.0.0&side=provider&timeout=5000&timestamp=1611975477170&version=1.0.0&id=registry1&mapping-type=metadata&mapping.type=metadata&pid=2188&qos.port=22222&timestamp=1611975477162
+        // ephemeral  =true
         if (!ephemeral) { // 如果要创建的节点类型非临时节点，那么这里要检测节点是否存在
             if(persistentExistNodePath.contains(path)){
                 return;

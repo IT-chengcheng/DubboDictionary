@@ -105,7 +105,7 @@ public class CuratorZookeeperClient extends AbstractZookeeperClient<CuratorZooke
     @Override
     public void createEphemeral(String path) {
         try {
-            // 通过 Curator 框架创建节点
+            // 通过 Curator 框架创建节点.
             client.create().withMode(CreateMode.EPHEMERAL).forPath(path);
         } catch (NodeExistsException e) {
             logger.warn("ZNode " + path + " already exists, since we will only try to recreate a node on a session expiration" +

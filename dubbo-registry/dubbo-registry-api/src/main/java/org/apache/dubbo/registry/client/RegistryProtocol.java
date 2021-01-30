@@ -203,15 +203,14 @@ public class RegistryProtocol implements Protocol {
         /**
          * 获取注册中心 URL，以 zookeeper 注册中心为例，得到的示例 URL 如下：
          * zookeeper://127.0.0.1:2181/com.alibaba.dubbo.registry.RegistryService?application=demo-provider&dubbo=2.0.2
-         * &export=dubbo%3A%2F%2F172.17.48.52%3A20880%2Fcom.alibaba.dubbo.demo.DemoService%3Fanyhost%3Dtrue%26application%3Ddemo-provider
+         *         &export=dubbo%3A%2F%2F192.168.1.103%3A20880%2Forg.apache.dubbo.demo.GreetingService%3Fanyhost%3Dtrue%26application%3Ddemo-provider%26bind.ip%3D192.168.1.103%26bind.port%3D20880%26deprecated%3Dfalse%26dubbo%3D2.0.2%26dynamic%3Dtrue%26generic%3Dfalse%26group%3Dgreeting%26interface%3Dorg.apache.dubbo.demo.GreetingService%26mapping-type%3Dmetadata%26mapping.type%3Dmetadata%26metadata-type%3Dremote%26methods%3DhaveNoReturn%2CsetTestgaga%2CgetTestddd%2Chello%26pid%3D2188%26qos.port%3D22222%26release%3D%26revision%3D1.0.0%26side%3Dprovider%26timeout%3D5000%26timestamp%3D1611975477170%26version%3D1.0.0&id=registry1&mapping-type=metadata&mapping.type=metadata&pid=2188&qos.port=22222&timestamp=1611975477162
          * export解码后：
-         * export=dubbo://172.17.48.52:20880/com.alibaba.dubbo.demo.DemoService?anyhost=true&application=demo-provider
+         * export=dubbo://192.168.1.103:20880/org.apache.dubbo.demo.GreetingService?anyhost=true&application=demo-provider&bind.ip=192.168.1.103&bind.port=20880&deprecated=false&dubbo=2.0.2&dynamic=true&generic=false&group=greeting&interface=org.apache.dubbo.demo.GreetingService&mapping-type=metadata&mapping.type=metadata&metadata-type=remote&methods=haveNoReturn,setTestgaga,getTestddd,hello&pid=2188&qos.port=22222&release=&revision=1.0.0&side=provider&timeout=5000&timestamp=1611975477170&version=1.0.0&id=registry1&mapping-type=metadata&mapping.type=metadata&pid=2188&qos.port=22222&timestamp=1611975477162
          */
         URL registryUrl = getRegistryUrl(originInvoker);
-        /**待定是这个注释：debug看看
-         * url to export locally 获取已注册的服务提供者 URL，比如：
-         * dubbo://172.17.48.52:20880/com.alibaba.dubbo.demo.DemoService?anyhost=true&application=demo-provider&dubbo=2.0.2
-         * &generic=false&interface=com.alibaba.dubbo.demo.DemoService&methods=sayHello
+        /**
+         * url to export locally 获取已注册的服务提供者 URL，其实就是上面的url的export的值，比如：
+         * dubbo://192.168.1.103:20880/org.apache.dubbo.demo.GreetingService?anyhost=true&application=demo-provider&bind.ip=192.168.1.103&bind.port=20880&deprecated=false&dubbo=2.0.2&dynamic=true&generic=false&group=greeting&interface=org.apache.dubbo.demo.GreetingService&mapping-type=metadata&mapping.type=metadata&metadata-type=remote&methods=haveNoReturn,setTestgaga,getTestddd,hello&pid=2188&qos.port=22222&release=&revision=1.0.0&side=provider&timeout=5000&timestamp=1611975477170&version=1.0.0
          */
         URL providerUrl = getProviderUrl(originInvoker);
 
@@ -221,8 +220,8 @@ public class RegistryProtocol implements Protocol {
         //  subscription information to cover.
         /**
          * 获取订阅 URL，比如：
-         * provider://172.17.48.52:20880/com.alibaba.dubbo.demo.DemoService?category=configurators&check=false&anyhost=true
-         * &application=demo-provider&dubbo=2.0.2&generic=false&interface=com.alibaba.dubbo.demo.DemoService&methods=sayHello
+         * provider://192.168.1.103:20880/org.apache.dubbo.demo.GreetingService?anyhost=true&application=demo-provider&bind.ip=192.168.1.103&bind.port=20880
+         *              &category=configurators&check=false&deprecated=false&dubbo=2.0.2&dynamic=true&generic=false&group=greeting&interface=org.apache.dubbo.demo.GreetingService&mapping-type=metadata&mapping.type=metadata&metadata-type=remote&methods=haveNoReturn,setTestgaga,getTestddd,hello&pid=2188&qos.port=22222&release=&revision=1.0.0&side=provider&timeout=5000&timestamp=1611975477170&version=1.0.0
          */
         final URL overrideSubscribeUrl = getSubscribedOverrideUrl(providerUrl);
         // 创建监听器
@@ -230,12 +229,16 @@ public class RegistryProtocol implements Protocol {
         overrideListeners.put(overrideSubscribeUrl, overrideSubscribeListener);
 
         providerUrl = overrideUrlWithConfig(providerUrl, overrideSubscribeListener);
-        //export invoker  导出服务
+        /**
+         * export invoker  导出服务
+         */
         final ExporterChangeableWrapper<T> exporter = doLocalExport(originInvoker, providerUrl);
 
         // url to registry
-        // 根据 URL 加载 Registry 实现类，比如 ZookeeperRegistry
+        // 根据 URL 加载 Registry 实现类，里面有很多spi机制使用，最终得到 ：比如 ZookeeperRegistry
+        // 但是 外面加了一层wrapper，所以最终 registry =  ListenerRegistryWrapper
         final Registry registry = getRegistry(originInvoker);
+        // dubbo://192.168.1.103:20880/org.apache.dubbo.demo.GreetingService?anyhost=true&application=demo-provider&deprecated=false&dubbo=2.0.2&dynamic=true&generic=false&group=greeting&interface=org.apache.dubbo.demo.GreetingService&mapping-type=metadata&mapping.type=metadata&metadata-type=remote&methods=haveNoReturn,setTestgaga,getTestddd,hello&pid=2188&release=&revision=1.0.0&side=provider&timeout=5000&timestamp=1611975477170&version=1.0.0
         final URL registeredProviderUrl = getUrlToRegistry(providerUrl, registryUrl);
 
         // decide if we need to delay publish   获取 register 参数
@@ -285,6 +288,12 @@ public class RegistryProtocol implements Protocol {
 
     @SuppressWarnings("unchecked")
     private <T> ExporterChangeableWrapper<T> doLocalExport(final Invoker<T> originInvoker, URL providerUrl) {
+        /**
+         * providerUrl ->
+         * dubbo://192.168.1.103:20880/org.apache.dubbo.demo.GreetingService?anyhost=true&application=demo-provider
+         * &bind.ip=192.168.1.103&bind.port=20880&deprecated=false&dubbo=2.0.2&dynamic=true&generic=false&group=greeting&interface=org.apache.dubbo.demo.GreetingService&mapping-type=metadata&mapping.type=metadata&metadata-type=remote
+         * &methods=haveNoReturn,setTestgaga,getTestddd,hello&pid=2188&qos.port=22222&release=&revision=1.0.0&side=provider&timeout=5000&timestamp=1611975477170&version=1.0.0
+         */
         String key = getCacheKey(originInvoker);
 
          // 先从缓存中取，缓存汇中没有再去创建，然后再放入缓存，学习一下 computeIfAbsent（）用法
@@ -293,6 +302,7 @@ public class RegistryProtocol implements Protocol {
             Invoker<?> invokerDelegate = new InvokerDelegate<>(originInvoker, providerUrl);
             // 调用 protocol 的 export 方法导出服务
             /**
+             * 根据 dubbo-spi机制，判定进入哪个类
              * 假设运行时协议为 dubbo，此处的 protocol 变量会在运行时加载 DubboProtocol，并调用 DubboProtocol 的 export 方法。
              */
             return new ExporterChangeableWrapper<>((Exporter<T>) protocol.export(invokerDelegate), originInvoker);
@@ -395,6 +405,12 @@ public class RegistryProtocol implements Protocol {
      */
     protected Registry getRegistry(final Invoker<?> originInvoker) {
         URL registryUrl = getRegistryUrl(originInvoker);
+        /**
+         * zookeeper://127.0.0.1:2181/org.apache.dubbo.registry.RegistryService?application=demo-provider&dubbo=2.0.2
+         *           &export=dubbo%3A%2F%2F192.168.1.103%3A20880%2Forg.apache.dubbo.demo.GreetingService%3Fanyhost%3Dtrue%26application%3Ddemo-provider%26bind.ip%3D192.168.1.103%26bind.port%3D20880%26deprecated%3Dfalse%26dubbo%3D2.0.2%26dynamic%3Dtrue%26generic%3Dfalse%26group%3Dgreeting%26interface%3Dorg.apache.dubbo.demo.GreetingService%26mapping-type%3Dmetadata%26mapping.type%3Dmetadata%26metadata-type%3Dremote%26methods%3DhaveNoReturn%2CsetTestgaga%2CgetTestddd%2Chello%26pid%3D1092%26qos.port%3D22222%26release%3D%26revision%3D1.0.0%26side%3Dprovider%26timeout%3D5000%26timestamp%3D1611974170990%26version%3D1.0.0&id=registry1&mapping-type=metadata&mapping.type=metadata&pid=1092&qos.port=22222&timestamp=1611974170984
+         */
+        // 根据 SPI机制，找到 ZookeeperRegistryFactory extends AbstractRegistryFactory
+        // ,所以会进入 ZookeeperRegistryFactory 的 父类的  getRegistry（）
         return registryFactory.getRegistry(registryUrl);
     }
 

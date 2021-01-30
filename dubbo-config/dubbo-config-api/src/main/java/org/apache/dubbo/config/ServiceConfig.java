@@ -137,7 +137,7 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
     private DubboBootstrap bootstrap;
 
     /**
-     * The exported services, 导出的服务
+     * The exported services, 盛放所有导出的服务
      */
     private final List<Exporter<?>> exporters = new ArrayList<Exporter<?>>();
 
@@ -564,7 +564,7 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
                             continue;
                         }
                         url = url.addParameterIfAbsent(DYNAMIC_KEY, registryURL.getParameter(DYNAMIC_KEY));
-                        // 加载监视器链接
+                        // 加载监视器链接，一般为空
                         URL monitorUrl = ConfigValidationUtils.loadMonitor(this, registryURL);
                         if (monitorUrl != null) {
                             // 将监视器链接作为参数添加到 url 中
@@ -583,12 +583,25 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
                         //            &methods=haveNoReturn,setTestgaga,getTestddd,hello&pid=1144&qos.port=22222&release=&revision=1.0.0
                         //            &side=provider&timeout=5000&timestamp=1611924667311&version=1.0.0
                         // For providers, this is used to enable custom proxy to generate invoker
+                        // 看上面英文注释！！，如果自定义代理工厂的话，才会有这个key
                         String proxy = url.getParameter(PROXY_KEY);
                         if (StringUtils.isNotEmpty(proxy)) {
                             registryURL = registryURL.addParameter(PROXY_KEY, proxy);
                         }
-                        // 为服务提供类(ref)生成 Invoker
-                        // Invoker 是由 ProxyFactory 创建而来，Dubbo 默认的 ProxyFactory 实现类是 JavassistProxyFactory
+                        /**
+                         *  为服务提供类(ref)生成 Invoker
+                         *  Invoker 是由 ProxyFactory 创建而来，Dubbo 默认的 ProxyFactory 实现类是 JavassistProxyFactory
+                         *  ref   -> GreetingServiceImpl    接口实现类
+                         *  interfaceClass -> GreetingService  接口
+                         *  registryURL.addParameterAndEncoded(EXPORT_KEY, url.toFullString()) -> :
+                         *              EXPORT_KEY -> "export"
+                         *              url.toFullString() -> 就是url的全路径：dubbo://192.168.1.103:20880/org.apache.dubbo.demo.GreetingService?anyhost=true......
+                         *                                    这个url全路径包含了服务的IP地址，端口，接口名，方法名数组等等
+                         *  registryURL.addParameterAndEncoded(EXPORT_KEY, url.toFullString()) 目的就是把需要暴露的服务 encode成一个value
+                         *  然后作为一个export参数，拼接到registryURL后面，形如：
+                         *  registry://127.0.0.1:2181/org.apache.dubbo.registry.RegistryService?.....&export=经过encode的完整服务
+                         *  与上面exportLocal（...）对比着看
+                         */
                         Invoker<?> invoker = PROXY_FACTORY.getInvoker(ref, (Class) interfaceClass, registryURL.addParameterAndEncoded(EXPORT_KEY, url.toFullString()));
                         // DelegateProviderMetaDataInvoker 用于持有 Invoker 和 ServiceConfig
                         DelegateProviderMetaDataInvoker wrapperInvoker = new DelegateProviderMetaDataInvoker(invoker, this);
@@ -596,18 +609,25 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
                          * 导出服务，并生成 Exporter
                          * 导出服务到本地相比，导出服务到远程的过程要复杂不少，
                          * 其包含了服务导出与服务注册两个过程
-                         * RegistryProtocol
+                         * PROTOCOL.export(wrapperInvoker) 这行代码呢，根据dubbo-spi机制，会先 url= wrapperInvoker.getUrl(),
+                         * 然后 RegistryProtocol p = url.getProtocol(),所以呢 进入RegistryProtocol的export（）方法
                          */
                         Exporter<?> exporter = PROTOCOL.export(wrapperInvoker);
                         exporters.add(exporter);
                     }
                 } else { // 不存在注册中心，仅导出服务
+                    // url = dubbo://192.168.1.103:20880/org.apache.dubbo.demo.GreetingService?anyhost=true&application=demo-provider
+                    //            &bind.ip=192.168.1.103&bind.port=20880&deprecated=false&dubbo=2.0.2&dynamic=true&generic=false&group=greeting
+                    //            &interface=org.apache.dubbo.demo.GreetingService&mapping-type=metadata&mapping.type=metadata&metadata-type=remote
+                    //            &methods=haveNoReturn,setTestgaga,getTestddd,hello&pid=1144&qos.port=22222&release=&revision=1.0.0
+                    //            &side=provider&timeout=5000&timestamp=1611924667311&version=1.0.0
+                    // For providers, this is used to enable custom proxy to generate invoker
                     if (logger.isInfoEnabled()) {
                         logger.info("Export dubbo service " + interfaceClass.getName() + " to url " + url);
                     }
                     Invoker<?> invoker = PROXY_FACTORY.getInvoker(ref, (Class) interfaceClass, url);
                     DelegateProviderMetaDataInvoker wrapperInvoker = new DelegateProviderMetaDataInvoker(invoker, this);
-
+                    // 此时：根据dubbo-spi机制，会进入  DubboProtocol的export（）方法
                     Exporter<?> exporter = PROTOCOL.export(wrapperInvoker);
                     exporters.add(exporter);
                 }

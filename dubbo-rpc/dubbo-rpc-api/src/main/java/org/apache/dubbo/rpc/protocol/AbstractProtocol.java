@@ -45,7 +45,12 @@ import static org.apache.dubbo.common.constants.CommonConstants.VERSION_KEY;
 public abstract class AbstractProtocol implements Protocol {
 
     protected final Logger logger = LoggerFactory.getLogger(getClass());
-
+    /**
+     * 这是父类，他有很多子类 DubboProtocol,HttpProtocol,InjvmProtocol等
+     * exporterMap就是个容器，存储所有导出到zk上的服务
+     * 个人猜测是为了后续调用的时候，可以直接从exporterMap取出实现类，直接调用
+     * 这就是所谓的“服务导出”
+     */
     protected final Map<String, Exporter<?>> exporterMap = new ConcurrentHashMap<String, Exporter<?>>();
 
     /**

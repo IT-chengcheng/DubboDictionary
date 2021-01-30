@@ -280,15 +280,17 @@ public class DubboProtocol extends AbstractProtocol {
 
     @Override
     public <T> Exporter<T> export(Invoker<T> invoker) throws RpcException {
+        // dubbo://192.168.1.103:20880/org.apache.dubbo.demo.GreetingService?anyhost=true&application=demo-provider&bind.ip=192.168.1.103&bind.port=20880&deprecated=false&dubbo=2.0.2&dynamic=true&generic=false&group=greeting&interface=org.apache.dubbo.demo.GreetingService&mapping-type=metadata&mapping.type=metadata&metadata-type=remote
+        // &methods=haveNoReturn,setTestgaga,getTestddd,hello&pid=9732&qos.port=22222&release=&revision=1.0.0&side=provider&timeout=5000&timestamp=1611977785412&version=1.0.0
         URL url = invoker.getUrl();
 
         // export service.
         // 获取服务标识，理解成服务坐标也行。由服务组名，服务名，服务版本号以及端口组成。比如：
-        // demoGroup/com.alibaba.dubbo.demo.DemoService:1.0.1:20880
+        // greeting/org.apache.dubbo.demo.GreetingService:1.0.0:20880
         String key = serviceKey(url);
         // 创建 DubboExporter
         DubboExporter<T> exporter = new DubboExporter<T>(invoker, key, exporterMap);
-        // 将 <key, exporter> 键值对放入缓存中
+        // 将 <key, exporter> 键值对放入缓存中，也就是所谓的“服务导出”！！！！！
         exporterMap.put(key, exporter);
 
         //export an stub service for dispatching event
@@ -314,6 +316,7 @@ public class DubboProtocol extends AbstractProtocol {
     }
 
     private void openServer(URL url) {
+        // dubbo://192.168.1.103:20880/org.apache.dubbo.demo.GreetingService?anyhost=true&application=demo-provider&bind.ip=192.168.1.103&bind.port=20880&deprecated=false&dubbo=2.0.2&dynamic=true&generic=false&group=greeting&interface=org.apache.dubbo.demo.GreetingService&mapping-type=metadata&mapping.type=metadata&metadata-type=remote&methods=haveNoReturn,setTestgaga,getTestddd,hello&pid=9732&qos.port=22222&release=&revision=1.0.0&side=provider&timeout=5000&timestamp=1611977785412&version=1.0.0
         // find server.
         // 获取 host:port，并将其作为服务器实例的 key，用于标识当前的服务器实例
         String key = url.getAddress();
@@ -352,6 +355,7 @@ public class DubboProtocol extends AbstractProtocol {
                 .addParameterIfAbsent(HEARTBEAT_KEY, String.valueOf(DEFAULT_HEARTBEAT))
                 .addParameter(CODEC_KEY, DubboCodec.NAME)
                 .build();
+        // dubbo://192.168.1.103:20880/org.apache.dubbo.demo.GreetingService?anyhost=true&application=demo-provider&bind.ip=192.168.1.103&bind.port=20880&channel.readonly.sent=true&codec=dubbo&deprecated=false&dubbo=2.0.2&dynamic=true&generic=false&group=greeting&heartbeat=60000&interface=org.apache.dubbo.demo.GreetingService&mapping-type=metadata&mapping.type=metadata&metadata-type=remote&methods=haveNoReturn,setTestgaga,getTestddd,hello&pid=10144&qos.port=22222&release=&revision=1.0.0&side=provider&timeout=5000&timestamp=1611978365177&version=1.0.0
         // 获取 server 参数，默认为 netty
         String str = url.getParameter(SERVER_KEY, DEFAULT_REMOTING_SERVER);
         // 通过 SPI 检测是否存在 server 参数所代表的 Transporter 拓展，不存在则抛出异常
@@ -366,7 +370,7 @@ public class DubboProtocol extends AbstractProtocol {
         } catch (RemotingException e) {
             throw new RpcException("Fail to start server(url: " + url + ") " + e.getMessage(), e);
         }
-// 获取 client 参数，可指定 netty，mina
+        // 获取 client 参数，可指定 netty，mina
         str = url.getParameter(CLIENT_KEY);
         if (str != null && str.length() > 0) {
             // 获取所有的 Transporter 实现类名称集合，比如 supportedTypes = [netty, mina]

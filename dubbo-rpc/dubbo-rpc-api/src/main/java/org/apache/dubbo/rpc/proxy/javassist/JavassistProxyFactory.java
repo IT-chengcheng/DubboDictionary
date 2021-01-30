@@ -38,7 +38,7 @@ public class JavassistProxyFactory extends AbstractProxyFactory {
 
     @Override
     public <T> Invoker<T> getInvoker(T proxy, Class<T> type, URL url) {
-        //proxy -> GreetingServiceImpl
+        //proxy -> GreetingServiceImpl.
         // type -> GreeetingService
         // TODO Wrapper cannot handle this scenario correctly: the classname contains '$'
         // 为目标类创建 Wrapper，Wrapper是 GreetingServiceImpl 的代理类，里面最终执行的是 GreetingServiceImpl方法

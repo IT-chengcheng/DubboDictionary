@@ -315,6 +315,7 @@ public abstract class AbstractInterfaceConfig extends AbstractMethodConfig {
     public void completeCompoundConfigs(AbstractInterfaceConfig interfaceConfig) {
         if (interfaceConfig != null) {
             if (application == null) {
+                // 从 consumer 中获取 Application 实例，下同
                 setApplication(interfaceConfig.getApplication());
             }
             if (module == null) {

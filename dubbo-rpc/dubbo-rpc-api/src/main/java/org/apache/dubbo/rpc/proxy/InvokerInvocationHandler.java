@@ -51,7 +51,7 @@ public class InvokerInvocationHandler implements InvocationHandler {
 
     @Override
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-        if (method.getDeclaringClass() == Object.class) {
+        if (method.getDeclaringClass() == Object.class) {// 一般不会进这个判断
             return method.invoke(invoker, args);
         }
         String methodName = method.getName();

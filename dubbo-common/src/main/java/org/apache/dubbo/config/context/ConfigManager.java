@@ -68,7 +68,9 @@ public class ConfigManager extends LifecycleAdapter implements FrameworkExt {
     public static final String NAME = "config";
 
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
-
+    /**
+     * 是个缓存，存放从zookeeper或者redis拉取的配置信息，以及服务信息等等
+     */
     final Map<String, Map<String, AbstractConfig>> configsCache = newMap();
 
     public ConfigManager() {

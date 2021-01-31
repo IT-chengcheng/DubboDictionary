@@ -249,6 +249,9 @@ public class ReferenceConfig<T> extends ReferenceConfigBase<T> {
 
         if (bootstrap == null) {
             bootstrap = DubboBootstrap.getInstance();
+            /**
+             * 各种初始化设置，以及从远程配置中心，注册中心 拉取所有的数据，存储到 ConfigManager的缓存中
+             */
             bootstrap.initialize();
         }
 
@@ -404,9 +407,13 @@ public class ReferenceConfig<T> extends ReferenceConfigBase<T> {
              * 若 urls 元素数量大于1，即存在多个注册中心或服务直连 url，此时先根据 url 构建 Invoker。
              * 然后再通过 Cluster 合并多个 Invoker，最后调用 ProxyFactory 生成代理类
              */
-            // 单个注册中心或服务提供者(服务直连，下同)
+            /**
+             * 单个注册中心或服务提供者(服务直连，下同)
+             * url[0] = registry://127.0.0.1:2181/org.apache.dubbo.registry.RegistryService?application=dubbo-demo-annotation-consumer&dubbo=2.0.2&id=org.apache.dubbo.config.RegistryConfig#0&pid=5716&refer=application%3Ddubbo-demo-annotation-consumer%26dubbo%3D2.0.2%26init%3Dfalse%26interface%3Dorg.apache.dubbo.demo.DemoService%26methods%3DsayHello%2CsayHelloAsync%26pid%3D5716%26register.ip%3D192.168.1.103%26side%3Dconsumer%26sticky%3Dfalse%26timestamp%3D1612105565787&registry=zookeeper&timestamp=1612105565823
+             */
             if (urls.size() == 1) {
-                // 调用 RegistryProtocol 的 refer 构建 Invoker 实例
+                // 调用 RegistryProtocol 的 refer 构建 Invoker 实例,一定要注意各种Wrapper
+                // 先进入 InterfaceCompatibleRegistryProtocol extends RegistryProtocol 在进入 RegistryProtocol
                 invoker = REF_PROTOCOL.refer(interfaceClass, urls.get(0));
             } else {// 多个注册中心或多个服务提供者，或者两者混合
                 List<Invoker<?>> invokers = new ArrayList<Invoker<?>>();

@@ -80,6 +80,9 @@ public abstract class AbstractDirectory<T> implements Directory<T> {
 
     @Override
     public List<Invoker<T>> list(Invocation invocation) throws RpcException {
+        /**
+         * consumer开始调用接口方法的时候，最终会调用者里，获取服务附录
+         */
         if (destroyed) {
             throw new RpcException("Directory already destroyed .url: " + getUrl());
         }

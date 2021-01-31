@@ -519,6 +519,7 @@ public class RegistryProtocol implements Protocol {
     }
 
     protected <T> Invoker<T> doRefer(Cluster cluster, Registry registry, Class<T> type, URL url) {
+        // 注意子类实现！！！
         return interceptInvoker(getInvoker(cluster, registry, type, url), url);
     }
 
@@ -535,7 +536,10 @@ public class RegistryProtocol implements Protocol {
     }
 
     protected <T> ClusterInvoker<T> getInvoker(Cluster cluster, Registry registry, Class<T> type, URL url) {
-
+        /**
+         * createDirectory（）超级重要！！！！
+         * 这就是服务目录的入口！！！！
+         */
         DynamicDirectory<T> directory = createDirectory(type, url);
         // 设置注册中心和协议
         directory.setRegistry(registry);

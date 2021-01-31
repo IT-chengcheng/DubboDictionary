@@ -63,6 +63,9 @@ public class InterfaceCompatibleRegistryProtocol extends RegistryProtocol {
 
     @Override
     protected <T> DynamicDirectory<T> createDirectory(Class<T> type, URL url) {
+        /**
+         * 一定要仔细看每个父类！！！
+         */
         return new RegistryDirectory<>(type, url);
     }
 

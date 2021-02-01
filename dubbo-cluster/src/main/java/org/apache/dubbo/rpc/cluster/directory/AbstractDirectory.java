@@ -66,7 +66,9 @@ public abstract class AbstractDirectory<T> implements Directory<T> {
         if (url == null) {
             throw new IllegalArgumentException("url == null");
         }
-
+         //url = zookeeper://127.0.0.1:2181/org.apache.dubbo.registry.RegistryService?application=dubbo-demo-annotation-consumer
+         //       &dubbo=2.0.2&id=org.apache.dubbo.config.RegistryConfig#0&pid=7988
+        //        &refer=经过encode的一堆值
         queryMap = StringUtils.parseQueryString(url.getParameterAndDecoded(REFER_KEY));
         String path = queryMap.get(PATH_KEY);
         this.consumedProtocol = this.queryMap.get(PROTOCOL_KEY) == null ? DUBBO : this.queryMap.get(PROTOCOL_KEY);
@@ -81,7 +83,7 @@ public abstract class AbstractDirectory<T> implements Directory<T> {
     @Override
     public List<Invoker<T>> list(Invocation invocation) throws RpcException {
         /**
-         * consumer开始调用接口方法的时候，最终会调用者里，获取服务附录
+         *  consumer开始调用接口方法的时候，最终会调用者里，获取服务附录
          */
         if (destroyed) {
             throw new RpcException("Directory already destroyed .url: " + getUrl());

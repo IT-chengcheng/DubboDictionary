@@ -590,7 +590,9 @@ public class RegistryProtocol implements Protocol {
     }
 
     protected <T> DynamicDirectory<T> createDirectory(Class<T> type, URL url) {
-        // 去看子类实现！！
+        /**
+         * 去看子类实现！！
+         */
         return new ServiceDiscoveryRegistryDirectory<>(type, url);
     }
 

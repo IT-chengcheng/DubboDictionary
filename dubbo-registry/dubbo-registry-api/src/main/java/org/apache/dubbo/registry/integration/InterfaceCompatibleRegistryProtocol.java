@@ -64,7 +64,22 @@ public class InterfaceCompatibleRegistryProtocol extends RegistryProtocol {
     @Override
     protected <T> DynamicDirectory<T> createDirectory(Class<T> type, URL url) {
         /**
-         * 构造方法，调用了很多父类的逻辑
+         * 1、集群容错源码包含四个部分，分别是服务目录 Directory、服务路由 Router、集群 Cluster 和负载均衡 LoadBalance
+         *        这里是集群容错的开始 -> 服务目录 RegistryDirectory
+         * 2、服务目录是什么 : 服务目录中存储了一些和服务提供者有关的信息，通过服务目录，服务消费者可获取到服务提供者的信息，
+         *       比如 ip、端口、服务协议等。通过这些信息，服务消费者就可通过 Netty 等客户端进行远程调用。在一个服务集群中，
+         *       服务提供者数量并不是一成不变的，如果集群中新增了一台机器，相应地在服务目录中就要新增一条服务提供者记录。
+         *       或者，如果服务提供者的配置修改了，服务目录中的记录也要做相应的更新。如果这样说，服务目录和注册中心的功能
+         *       不就雷同了吗？确实如此，这里这么说是为了方便大家理解。实际上服务目录在获取注册中心的服务配置信息后，
+         *       会为每条配置信息生成一个 Invoker 对象，并把这个 Invoker 对象存储起来，这个 Invoker 才是服务目录最终持有的对象。
+         *       Invoker 有什么用呢？看名字就知道了，这是一个具有远程调用功能的对象。服务目录了可以看做是 Invoker 集合，
+         *       且这个集合中的元素会随注册中心的变化而进行动态调整。
+         *  3、RegistryDirectory extends DynamicDirectory  implements NotifyListener
+         *                               DynamicDirectory  extends AbstractDirectory
+         *  4、服务目录目前内置的实现有两个，分别为 StaticDirectory 和 RegistryDirectory，它们均是 AbstractDirectory 的子类。
+         *     AbstractDirectory 实现了 Directory 接口，这个接口包含了一个重要的方法定义，即 list(Invocation)，用于列举 Invoker
+         * 5、RegistryDirectory 实现了 NotifyListener 接口，当注册中心节点信息发生变化后，
+         *     RegistryDirectory 可以通过此接口方法得到变更信息，并根据变更信息动态调整内部 Invoker 列表
          */
         return new RegistryDirectory<>(type, url);
     }

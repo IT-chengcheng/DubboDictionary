@@ -48,6 +48,7 @@ import org.apache.dubbo.rpc.cluster.ClusterInvoker;
 import org.apache.dubbo.rpc.cluster.Configurator;
 import org.apache.dubbo.rpc.cluster.governance.GovernanceRuleRepository;
 import org.apache.dubbo.rpc.cluster.support.MergeableCluster;
+import org.apache.dubbo.rpc.cluster.support.wrapper.MockClusterWrapper;
 import org.apache.dubbo.rpc.model.ApplicationModel;
 import org.apache.dubbo.rpc.model.ProviderModel;
 import org.apache.dubbo.rpc.protocol.InvokerWrapper;
@@ -423,6 +424,9 @@ public class RegistryProtocol implements Protocol {
     }
 
     protected URL getRegistryUrl(URL url) {
+        /**
+         * 注意子类实现！！！！！   InterfaceCompatibleRegistryProtocol  重写了这个方法
+         */
         if (SERVICE_REGISTRY_PROTOCOL.equals(url.getProtocol())) {
             return url;
         }
@@ -494,15 +498,32 @@ public class RegistryProtocol implements Protocol {
     @Override
     @SuppressWarnings("unchecked")
     public <T> Invoker<T> refer(Class<T> type, URL url) throws RpcException {
+        /**入参：
+         * type -> interface org.apache.dubbo.demo.DemoService
+         * url ->  registry://127.0.0.1:2181/org.apache.dubbo.registry.RegistryService?application=dubbo-demo-annotation-consumer
+         *          &dubbo=2.0.2&id=org.apache.dubbo.config.RegistryConfig#0&pid=5716&registry=zookeeper&timestamp=1612105565823
+         *          &refer=encode后的参数
+         *      refer - encode前的参数=application=dubbo-demo-annotation-consumer&dubbo=2.0.2&init=false&interface=org.apache.dubbo.demo.DemoService
+         *                        &methods=sayHello,sayHelloAsync&pid=5716&register.ip=192.168.1.103&side=consumer&sticky=false&timestamp=1612105565787
+         */
+        // 经过处理后 url = zookeeper://127.0.0.1:2181/org.apache.dubbo.registry.RegistryService?application=dubbo-demo-annotation-consumer
+        //          &dubbo=2.0.2&id=org.apache.dubbo.config.RegistryConfig#0&pid=7988&refer=application%3Ddubbo-demo-annotation-consumer%26dubbo%3D2.0.2%26init%3Dfalse%26interface%3Dorg.apache.dubbo.demo.DemoService%26methods%3DsayHello%2CsayHelloAsync%26pid%3D7988%26register.ip%3D192.168.0.144%26side%3Dconsumer%26sticky%3Dfalse%26timestamp%3D1612161123967&timestamp=1612161124003
         url = getRegistryUrl(url);
-        // 获取注册中心实例
+        // 获取注册中心实例，registryFactory是个adaptive，调用getRegistry（）方法时，会进入这个代理类，然后根据Dubbo-SPI机制，
+        // 获取到 RegistryFactoryWrapper(ZookeeperRegistryFactory()) 然后进行调用 getRegistry(url)，最终得到结果是
+        // registry = ListenerRegistryWrapper(ZookeeperRegistry())
         Registry registry = registryFactory.getRegistry(url);
         if (RegistryService.class.equals(type)) {
             return proxyFactory.getInvoker((T) registry, type, url);
         }
 
         // group="a,b" or group="*"
-        // 将 url 查询字符串转为 Map
+        /**
+         *  将 url 参数 refer 首先decode（），然后转为 Map
+         *  “refer” decode后 = application=dubbo-demo-annotation-consumer&dubbo=2.0.2&init=false&interface=org.apache.dubbo.demo.DemoService
+         *       &methods=sayHello,sayHelloAsync&pid=5716&register.ip=192.168.1.103&side=consumer&sticky=false&timestamp=1612105565787
+         */
+
         Map<String, String> qs = StringUtils.parseQueryString(url.getParameterAndDecoded(REFER_KEY));
         // 获取 group 配置
         String group = qs.get(GROUP_KEY);
@@ -512,7 +533,8 @@ public class RegistryProtocol implements Protocol {
                 return doRefer(Cluster.getCluster(MergeableCluster.NAME), registry, type, url);
             }
         }
-
+        // 根据Duboo-SPI机制知道 cluster，没传cluster参数的话，默认是 FailoverCluster,经过wrapper后变为：
+        // MockClusterWrapper(FailoverCluster())
         Cluster cluster = Cluster.getCluster(qs.get(CLUSTER_KEY));
         // 调用 doRefer 继续执行服务引用逻辑
         return doRefer(cluster, registry, type, url);
@@ -536,6 +558,13 @@ public class RegistryProtocol implements Protocol {
     }
 
     protected <T> ClusterInvoker<T> getInvoker(Cluster cluster, Registry registry, Class<T> type, URL url) {
+        /**
+         *  cluster = MockClusterWrapper(FailoverCluster())
+         *  registry = ListenerRegistryWrapper(ZookeeperRegistry())
+         *  type =  org.apache.dubbo.demo.DemoService
+         *  url =  url = zookeeper://127.0.0.1:2181/org.apache.dubbo.registry.RegistryService?application=dubbo-demo-annotation-consumer
+         &dubbo=2.0.2&id=org.apache.dubbo.config.RegistryConfig#0&pid=7988&refer=经过encode的一堆值
+         */
         /**
          * createDirectory（）超级重要！！！！
          * 这就是服务目录的入口！！！！
@@ -561,6 +590,7 @@ public class RegistryProtocol implements Protocol {
     }
 
     protected <T> DynamicDirectory<T> createDirectory(Class<T> type, URL url) {
+        // 去看子类实现！！
         return new ServiceDiscoveryRegistryDirectory<>(type, url);
     }
 

@@ -64,12 +64,19 @@ public class InterfaceCompatibleRegistryProtocol extends RegistryProtocol {
     @Override
     protected <T> DynamicDirectory<T> createDirectory(Class<T> type, URL url) {
         /**
-         * 一定要仔细看每个父类！！！
+         * 构造方法，调用了很多父类的逻辑
          */
         return new RegistryDirectory<>(type, url);
     }
 
     protected <T> Invoker<T> doRefer(Cluster cluster, Registry registry, Class<T> type, URL url) {
+        /**
+         *  cluster = MockClusterWrapper(FailoverCluster())
+         *  registry = ListenerRegistryWrapper(ZookeeperRegistry())
+         *  type =  org.apache.dubbo.demo.DemoService
+         *  url =  url = zookeeper://127.0.0.1:2181/org.apache.dubbo.registry.RegistryService?application=dubbo-demo-annotation-consumer
+               &dubbo=2.0.2&id=org.apache.dubbo.config.RegistryConfig#0&pid=7988&refer=经过encode的一堆值
+         */
         ClusterInvoker<T> invoker = getInvoker(cluster, registry, type, url);
         ClusterInvoker<T> serviceDiscoveryInvoker = getServiceDiscoveryInvoker(cluster, type, url);
         ClusterInvoker<T> migrationInvoker = new MigrationInvoker<>(invoker, serviceDiscoveryInvoker);

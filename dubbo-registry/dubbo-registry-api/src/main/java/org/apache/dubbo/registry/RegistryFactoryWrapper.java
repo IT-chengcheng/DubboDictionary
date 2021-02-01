@@ -25,6 +25,9 @@ import java.util.Collections;
 public class RegistryFactoryWrapper implements RegistryFactory {
     private RegistryFactory registryFactory;
 
+    /**
+     * 通过Dubbo-SPI机制进行调用
+     */
     public RegistryFactoryWrapper(RegistryFactory registryFactory) {
         this.registryFactory = registryFactory;
     }

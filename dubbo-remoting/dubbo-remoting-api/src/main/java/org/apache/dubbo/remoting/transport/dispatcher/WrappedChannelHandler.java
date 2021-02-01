@@ -74,9 +74,9 @@ public class WrappedChannelHandler implements ChannelHandlerDelegate {
     }
 
     protected void sendFeedback(Channel channel, Request request, Throwable t) throws RemotingException {
-        if (request.isTwoWay()) {
+        if (request.isTwoWay()) {  // exhausted  /ɪɡˈzɔːstɪd/ 筋疲力尽的，疲惫不堪的；耗尽的，枯竭的
             String msg = "Server side(" + url.getIp() + "," + url.getPort()
-                    + ") thread pool is exhausted, detail msg:" + t.getMessage();
+                    + ") thread pool is exhausted   , detail msg:" + t.getMessage();
             Response response = new Response(request.getId(), request.getVersion());
             response.setStatus(Response.SERVER_THREADPOOL_EXHAUSTED_ERROR);
             response.setErrorMessage(msg);

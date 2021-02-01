@@ -45,6 +45,7 @@ import org.apache.dubbo.rpc.cluster.directory.AbstractDirectory;
 import org.apache.dubbo.rpc.cluster.directory.StaticDirectory;
 import org.apache.dubbo.rpc.cluster.support.ClusterUtils;
 import org.apache.dubbo.rpc.cluster.support.registry.ZoneAwareCluster;
+import org.apache.dubbo.rpc.cluster.support.registry.ZoneAwareClusterInvoker;
 import org.apache.dubbo.rpc.model.ApplicationModel;
 import org.apache.dubbo.rpc.model.AsyncMethodInfo;
 import org.apache.dubbo.rpc.model.ConsumerModel;
@@ -246,7 +247,6 @@ public class ReferenceConfig<T> extends ReferenceConfigBase<T> {
             return;
         }
 
-
         if (bootstrap == null) {
             bootstrap = DubboBootstrap.getInstance();
             /**
@@ -327,7 +327,7 @@ public class ReferenceConfig<T> extends ReferenceConfigBase<T> {
         map.put(REGISTER_IP_KEY, hostToRegistry);
 
         serviceMetadata.getAttachments().putAll(map);
-         // 创建代理类,并且构建以及合并 Invoker 实例
+         // 创建代理类,并且构建以及合并 Invoker 实例,注意这个map有各种消费者信息，以及接口方法信息
         ref = createProxy(map);
 
         serviceMetadata.setTarget(ref);
@@ -381,11 +381,15 @@ public class ReferenceConfig<T> extends ReferenceConfigBase<T> {
                         }
                     }
                 }
-            } else { // assemble URL from register center's configuration
+            } else {// 不是点对点调用，是从注册中心获取IP以及各种配置
+                // assemble URL from register center's configuration
                 // if protocols not injvm checkRegistry
                 if (!LOCAL_PROTOCOL.equalsIgnoreCase(getProtocol())) {
                     checkRegistry();
                     // 加载注册中心 url
+                    //单个 url =  registry://127.0.0.1:2181/org.apache.dubbo.registry.RegistryService?application=dubbo-demo-annotation-consumer
+                    //           &dubbo=2.0.2&id=org.apache.dubbo.config.RegistryConfig#0&pid=6744&registry=zookeeper&timestamp=1612147749721
+                   //
                     List<URL> us = ConfigValidationUtils.loadRegistries(this, false);
                     if (CollectionUtils.isNotEmpty(us)) {
                         for (URL u : us) {
@@ -406,16 +410,33 @@ public class ReferenceConfig<T> extends ReferenceConfigBase<T> {
              * 若 urls 元素数量为1，则直接通过 Protocol 自适应拓展类构建 Invoker 实例接口。
              * 若 urls 元素数量大于1，即存在多个注册中心或服务直连 url，此时先根据 url 构建 Invoker。
              * 然后再通过 Cluster 合并多个 Invoker，最后调用 ProxyFactory 生成代理类
+             * 注意：urls数量取决于 是否有多个注册中心或多个服务提供者
+             *            不是指的多个IP，比如“127.0.0.1:2181,127.2.9.2:8908,....”
              */
             /**
              * 单个注册中心或服务提供者(服务直连，下同)
-             * url[0] = registry://127.0.0.1:2181/org.apache.dubbo.registry.RegistryService?application=dubbo-demo-annotation-consumer&dubbo=2.0.2&id=org.apache.dubbo.config.RegistryConfig#0&pid=5716&refer=application%3Ddubbo-demo-annotation-consumer%26dubbo%3D2.0.2%26init%3Dfalse%26interface%3Dorg.apache.dubbo.demo.DemoService%26methods%3DsayHello%2CsayHelloAsync%26pid%3D5716%26register.ip%3D192.168.1.103%26side%3Dconsumer%26sticky%3Dfalse%26timestamp%3D1612105565787&registry=zookeeper&timestamp=1612105565823
+             * url[0] = registry://127.0.0.1:2181/org.apache.dubbo.registry.RegistryService?application=dubbo-demo-annotation-consumer
+             *          &dubbo=2.0.2&id=org.apache.dubbo.config.RegistryConfig#0&pid=5716&refer=encode后的参数
+             *      refer - encode前的参数=application=dubbo-demo-annotation-consumer&dubbo=2.0.2&init=false&interface=org.apache.dubbo.demo.DemoService
+             *                        &methods=sayHello,sayHelloAsync&pid=5716&register.ip=192.168.1.103&side=consumer&sticky=false&timestamp=1612105565787
+             *                        &registry=zookeeper&timestamp=1612105565823
              */
             if (urls.size() == 1) {
                 // 调用 RegistryProtocol 的 refer 构建 Invoker 实例,一定要注意各种Wrapper
-                // 先进入 InterfaceCompatibleRegistryProtocol extends RegistryProtocol 在进入 RegistryProtocol
+                /**
+                 * 根据Duboo-SPI机制，首先获得了 REF_PROTOCOL = AdaptiveExtension，也就是个代理类，当代理类执行 refer（）时，
+                 * 会根据入参获得扩展key=url.getParamter("注解方法的value值"),拿到key以后，会真正调用getExtension("key"),
+                 * 此时拿到的值可能是个经过层层包装的wrapper，对于以下方法拿到的就是
+                 * ProtocolFilterWrapper( ProtocolListenerWrapper(InterfaceCompatibleRegistryProtocol()))
+                 * 经过分析源码得出的经验：所有的Protocol实现类，都会至少有两层wrapper
+                 * ProtocolFilterWrapper( ProtocolListenerWrapper（））
+                 */
                 invoker = REF_PROTOCOL.refer(interfaceClass, urls.get(0));
-            } else {// 多个注册中心或多个服务提供者，或者两者混合
+            } else {
+                /**
+                 * 多个注册中心或多个服务提供者，或者两者混合时：合并成一个invoker
+                 * 注意不是多个IP，不是“127.0.0.1:2181,127.2.9.2:8908,....”
+                 */
                 List<Invoker<?>> invokers = new ArrayList<Invoker<?>>();
                 URL registryURL = null;
                 // 获取所有的 Invoker
@@ -434,6 +455,8 @@ public class ReferenceConfig<T> extends ReferenceConfigBase<T> {
                     String cluster = registryURL.getParameter(CLUSTER_KEY, ZoneAwareCluster.NAME);
                     // The invoker wrap sequence would be: ZoneAwareClusterInvoker(StaticDirectory) -> FailoverClusterInvoker(RegistryDirectory, routing happens here) -> Invoker
                     // 创建 StaticDirectory 实例，并由 Cluster 对多个 Invoker 进行合并
+                    // ZoneAwareCluster extends AbstractCluster
+                    // invoker = InterceptorInvokerNode(ZoneAwareClusterInvoker extends AbstractClusterInvoker)
                     invoker = Cluster.getCluster(cluster, false).join(new StaticDirectory(registryURL, invokers));
                 } else { // not a registry url, must be direct invoke.
                     String cluster = CollectionUtils.isNotEmpty(invokers)

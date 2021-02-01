@@ -86,6 +86,7 @@ public abstract class AbstractRegistry implements Registry {
     private boolean syncSaveFile;
     private final AtomicLong lastCacheChanged = new AtomicLong();
     private final AtomicInteger savePropertiesRetryTimes = new AtomicInteger();
+   //  consumer://192.168.1.103/org.apache.dubbo.demo.DemoService?application=demo-consumer&backup=127.0.0.1:2183,127.0.0.1:2182&category=consumers&check=false&dubbo=2.0.2&enable-auto-migration=true&enable.auto.migration=true&id=org.apache.dubbo.config.RegistryConfig&init=false&interface=org.apache.dubbo.demo.DemoService&mapping-type=metadata&mapping.type=metadata&metadata-type=remote&methods=sayHello,sayHelloAsync&pid=4736&provided-by=demo-provider&qos.port=33333&side=consumer&sticky=false&timestamp=1612187220429
     private final Set<URL> registered = new ConcurrentHashSet<>();
     private final ConcurrentMap<URL, Set<NotifyListener>> subscribed = new ConcurrentHashMap<>();
     private final ConcurrentMap<URL, Map<String, List<URL>>> notified = new ConcurrentHashMap<>();

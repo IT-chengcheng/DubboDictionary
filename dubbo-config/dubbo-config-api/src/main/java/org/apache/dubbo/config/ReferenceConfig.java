@@ -386,10 +386,12 @@ public class ReferenceConfig<T> extends ReferenceConfigBase<T> {
                 // if protocols not injvm checkRegistry
                 if (!LOCAL_PROTOCOL.equalsIgnoreCase(getProtocol())) {
                     checkRegistry();
-                    // 加载注册中心 url
-                    //单个 url =  registry://127.0.0.1:2181/org.apache.dubbo.registry.RegistryService?application=dubbo-demo-annotation-consumer
-                    //           &dubbo=2.0.2&id=org.apache.dubbo.config.RegistryConfig#0&pid=6744&registry=zookeeper&timestamp=1612147749721
-                   //
+                    /**
+                     * us[0] = registry://127.0.0.1:2181/org.apache.dubbo.registry.RegistryService?application=demo-consumer
+                     *              &backup=127.0.0.1:2183,127.0.0.1:2182
+                     *              &dubbo=2.0.2&enable-auto-migration=true&enable.auto.migration=true&id=org.apache.dubbo.config.RegistryConfig&mapping-type=metadata&mapping.type=metadata&pid=2208&qos.port=33333&timestamp=1612186366066
+                     *              &registry=zookeeper
+                     */
                     List<URL> us = ConfigValidationUtils.loadRegistries(this, false);
                     if (CollectionUtils.isNotEmpty(us)) {
                         for (URL u : us) {
@@ -416,7 +418,8 @@ public class ReferenceConfig<T> extends ReferenceConfigBase<T> {
             /**
              * 单个注册中心或服务提供者(服务直连，下同)
              * url[0] = registry://127.0.0.1:2181/org.apache.dubbo.registry.RegistryService?application=dubbo-demo-annotation-consumer
-             *          &dubbo=2.0.2&id=org.apache.dubbo.config.RegistryConfig#0&pid=5716&refer=encode后的参数
+             *          &dubbo=2.0.2&id=org.apache.dubbo.config.RegistryConfig#0&pid=5716
+             *          &backup=127.0.0.1:2183,127.0.0.1:2182&refer=encode后的参数
              *      refer - encode前的参数=application=dubbo-demo-annotation-consumer&dubbo=2.0.2&init=false&interface=org.apache.dubbo.demo.DemoService
              *                        &methods=sayHello,sayHelloAsync&pid=5716&register.ip=192.168.1.103&side=consumer&sticky=false&timestamp=1612105565787
              *                        &registry=zookeeper&timestamp=1612105565823

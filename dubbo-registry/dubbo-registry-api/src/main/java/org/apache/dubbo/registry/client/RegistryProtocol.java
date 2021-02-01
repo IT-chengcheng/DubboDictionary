@@ -502,12 +502,12 @@ public class RegistryProtocol implements Protocol {
          * type -> interface org.apache.dubbo.demo.DemoService
          * url ->  registry://127.0.0.1:2181/org.apache.dubbo.registry.RegistryService?application=dubbo-demo-annotation-consumer
          *          &dubbo=2.0.2&id=org.apache.dubbo.config.RegistryConfig#0&pid=5716&registry=zookeeper&timestamp=1612105565823
-         *          &refer=encode后的参数
+         *          &backup=127.0.0.1:2183,127.0.0.1:2182&refer=encode后的参数
          *      refer - encode前的参数=application=dubbo-demo-annotation-consumer&dubbo=2.0.2&init=false&interface=org.apache.dubbo.demo.DemoService
          *                        &methods=sayHello,sayHelloAsync&pid=5716&register.ip=192.168.1.103&side=consumer&sticky=false&timestamp=1612105565787
          */
         // 经过处理后 url = zookeeper://127.0.0.1:2181/org.apache.dubbo.registry.RegistryService?application=dubbo-demo-annotation-consumer
-        //          &dubbo=2.0.2&id=org.apache.dubbo.config.RegistryConfig#0&pid=7988&refer=application%3Ddubbo-demo-annotation-consumer%26dubbo%3D2.0.2%26init%3Dfalse%26interface%3Dorg.apache.dubbo.demo.DemoService%26methods%3DsayHello%2CsayHelloAsync%26pid%3D7988%26register.ip%3D192.168.0.144%26side%3Dconsumer%26sticky%3Dfalse%26timestamp%3D1612161123967&timestamp=1612161124003
+        //               &backup=127.0.0.1:2183,127.0.0.1:2182&dubbo=2.0.2&id=org.apache.dubbo.config.RegistryConfig#0&pid=7988&refer=application%3Ddubbo-demo-annotation-consumer%26dubbo%3D2.0.2%26init%3Dfalse%26interface%3Dorg.apache.dubbo.demo.DemoService%26methods%3DsayHello%2CsayHelloAsync%26pid%3D7988%26register.ip%3D192.168.0.144%26side%3Dconsumer%26sticky%3Dfalse%26timestamp%3D1612161123967&timestamp=1612161124003
         url = getRegistryUrl(url);
         // 获取注册中心实例，registryFactory是个adaptive，调用getRegistry（）方法时，会进入这个代理类，然后根据Dubbo-SPI机制，
         // 获取到 RegistryFactoryWrapper(ZookeeperRegistryFactory()) 然后进行调用 getRegistry(url)，最终得到结果是
@@ -563,7 +563,7 @@ public class RegistryProtocol implements Protocol {
          *  registry = ListenerRegistryWrapper(ZookeeperRegistry())
          *  type =  org.apache.dubbo.demo.DemoService
          *  url =  url = zookeeper://127.0.0.1:2181/org.apache.dubbo.registry.RegistryService?application=dubbo-demo-annotation-consumer
-         &dubbo=2.0.2&id=org.apache.dubbo.config.RegistryConfig#0&pid=7988&refer=经过encode的一堆值
+         *           &backup=127.0.0.1:2183,127.0.0.1:2182&dubbo=2.0.2&id=org.apache.dubbo.config.RegistryConfig#0&pid=7988&refer=经过encode的一堆值
          */
         /**
          * createDirectory（）超级重要！！！！
@@ -572,8 +572,11 @@ public class RegistryProtocol implements Protocol {
         DynamicDirectory<T> directory = createDirectory(type, url);
         // 设置注册中心和协议
         directory.setRegistry(registry);
+        // protocol = Protocol$Adaptive
         directory.setProtocol(protocol);
         // all attributes of REFER_KEY
+        // directory.getConsumerUrl() = consumer://192.168.1.103/org.apache.dubbo.demo.DemoService?application=demo-consumer
+        //             &backup=127.0.0.1:2183,127.0.0.1:2182&category=providers,configurators,routers&check=false&dubbo=2.0.2&enable-auto-migration=true&enable.auto.migration=true&id=org.apache.dubbo.config.RegistryConfig&init=false&interface=org.apache.dubbo.demo.DemoService&mapping-type=metadata&mapping.type=metadata&metadata-type=remote&methods=sayHello,sayHelloAsync&pid=7128&provided-by=demo-provider&qos.port=33333&side=consumer&sticky=false&timestamp=1612186853746
         Map<String, String> parameters = new HashMap<String, String>(directory.getConsumerUrl().getParameters());
         URL urlToRegistry = new URL(CONSUMER_PROTOCOL, parameters.remove(REGISTER_IP_KEY), 0, type.getName(), parameters);
         if (directory.isShouldRegister()) {
@@ -582,7 +585,9 @@ public class RegistryProtocol implements Protocol {
             registry.register(directory.getRegisteredConsumerUrl());
         }
         directory.buildRouterChain(urlToRegistry);
-        // 订阅 providers、configurators、routers 等节点数据
+        /**
+         * 添加各种监听器 订阅 providers、configurators、routers 等节点数据
+         */
         directory.subscribe(toSubscribeUrl(urlToRegistry));
 
         // 一个注册中心可能有多个服务提供者，因此这里需要将多个服务提供者合并为一个

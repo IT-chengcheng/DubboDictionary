@@ -46,14 +46,17 @@ public abstract class AbstractDirectory<T> implements Directory<T> {
 
     // logger
     private static final Logger logger = LoggerFactory.getLogger(AbstractDirectory.class);
-
+// zookeeper://127.0.0.1:2181/org.apache.dubbo.registry.RegistryService?application=dubbo-demo-annotation-consumer&dubbo=2.0.2&id=org.apache.dubbo.config.RegistryConfig#0&pid=4396&timestamp=1612185635706
     private final URL url;
 
     private volatile boolean destroyed = false;
-
+// dubbo://127.0.0.1:2181/org.apache.dubbo.demo.DemoService?application=dubbo-demo-annotation-consumer&dubbo=2.0.2&id=org.apache.dubbo.config.RegistryConfig#0&init=false&interface=org.apache.dubbo.demo.DemoService&methods=sayHello,sayHelloAsync&pid=4396&register.ip=192.168.1.103&side=consumer&sticky=false&timestamp=1612185635673
     protected volatile URL consumerUrl;
 
+    // application=dubbo-demo-annotation-consumer&dubbo=2.0.2&init=false&interface=org.apache.dubbo.demo.DemoService
+    // &methods=sayHello,sayHelloAsync&pid=4396&register.ip=192.168.1.103&side=consumer&sticky=false&timestamp=1612185635673&timestamp=1612185635706
     protected final Map<String, String> queryMap; // Initialization at construction time, assertion not null
+    // 默认为dubbo
     protected final String consumedProtocol;
 
     protected RouterChain<T> routerChain;
@@ -66,14 +69,15 @@ public abstract class AbstractDirectory<T> implements Directory<T> {
         if (url == null) {
             throw new IllegalArgumentException("url == null");
         }
-         //url = zookeeper://127.0.0.1:2181/org.apache.dubbo.registry.RegistryService?application=dubbo-demo-annotation-consumer
-         //       &dubbo=2.0.2&id=org.apache.dubbo.config.RegistryConfig#0&pid=7988
-        //        &refer=经过encode的一堆值
+         //application=dubbo-demo-annotation-consumer&dubbo=2.0.2&init=false&interface=org.apache.dubbo.demo.DemoService
+        // &methods=sayHello,sayHelloAsync&pid=4396&register.ip=192.168.1.103&side=consumer&sticky=false&timestamp=1612185635673&timestamp=1612185635706
         queryMap = StringUtils.parseQueryString(url.getParameterAndDecoded(REFER_KEY));
         String path = queryMap.get(PATH_KEY);
+        // dubbo
         this.consumedProtocol = this.queryMap.get(PROTOCOL_KEY) == null ? DUBBO : this.queryMap.get(PROTOCOL_KEY);
+        // zookeeper://127.0.0.1:2181/org.apache.dubbo.registry.RegistryService?application=dubbo-demo-annotation-consumer&dubbo=2.0.2&id=org.apache.dubbo.config.RegistryConfig#0&pid=4396&timestamp=1612185635706&backup=127.0.0.1:2183,127.0.0.1:2182
         this.url = url.removeParameter(REFER_KEY).removeParameter(MONITOR_KEY);
-
+// dubbo://127.0.0.1:2181/org.apache.dubbo.demo.DemoService?application=dubbo-demo-annotation-consumer&dubbo=2.0.2&id=org.apache.dubbo.config.RegistryConfig#0&init=false&interface=org.apache.dubbo.demo.DemoService&methods=sayHello,sayHelloAsync&pid=4396&register.ip=192.168.1.103&side=consumer&sticky=false&timestamp=1612185635673
         this.consumerUrl = this.url.setProtocol(consumedProtocol).setPath(path == null ? queryMap.get(INTERFACE_KEY) : path).addParameters(queryMap)
                 .removeParameter(MONITOR_KEY);
 

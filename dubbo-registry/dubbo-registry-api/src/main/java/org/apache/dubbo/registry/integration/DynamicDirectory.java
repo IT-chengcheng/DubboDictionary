@@ -67,6 +67,7 @@ public abstract class DynamicDirectory<T> extends AbstractDirectory<T> implement
     protected final Class<T> serviceType; // Initialization at construction time, assertion not null
     protected final boolean multiGroup;
     protected Protocol protocol; // Initialization at the time of injection, the assertion is not null
+    // ListenerRegistryWrapper(ZookeeperRegistry())
     protected Registry registry; // Initialization at the time of injection, the assertion is not null
     protected volatile boolean forbidden = false;
     protected boolean shouldRegister;
@@ -104,10 +105,13 @@ public abstract class DynamicDirectory<T> extends AbstractDirectory<T> implement
         if (url.getServiceKey() == null || url.getServiceKey().length() == 0) {
             throw new IllegalArgumentException("registry serviceKey is null.");
         }
+        //  org.apache.dubbo.demo.DemoService
         this.serviceType = serviceType;
+        //   //  org.apache.dubbo.demo.DemoService
         this.serviceKey = super.getConsumerUrl().getServiceKey();
 
         String group = queryMap.get(GROUP_KEY) != null ? queryMap.get(GROUP_KEY) : "";
+        // false
         this.multiGroup = group != null && (ANY_VALUE.equals(group) || group.contains(","));
     }
 
@@ -133,6 +137,9 @@ public abstract class DynamicDirectory<T> extends AbstractDirectory<T> implement
     }
 
     public void subscribe(URL url) {
+        /**
+         * 注意子类实现！！！！
+         */
         setConsumerUrl(url);
         registry.subscribe(url, this);
     }
@@ -208,6 +215,9 @@ public abstract class DynamicDirectory<T> extends AbstractDirectory<T> implement
     }
 
     public void buildRouterChain(URL url) {
+        /**
+         * 注意子类实现
+         */
         this.setRouterChain(RouterChain.buildChain(url));
     }
 

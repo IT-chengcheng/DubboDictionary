@@ -142,6 +142,12 @@ public class RegistryDirectory<T> extends DynamicDirectory<T> implements NotifyL
 
     @Override
     public synchronized void notify(List<URL> urls) {
+        /**
+         * 分为三组，三个key
+         * configurators  ： 配置器 url
+         * routers  ：路由 url
+         * providers ：存放服务提供者 url
+         */
         Map<String, List<URL>> categoryUrls = urls.stream()
                 .filter(Objects::nonNull)
                 .filter(this::isValidCategory)
@@ -503,6 +509,7 @@ public class RegistryDirectory<T> extends DynamicDirectory<T> implements NotifyL
     @Override
     public List<Invoker<T>> doList(Invocation invocation) {
         if (forbidden) {
+            // 服务提供者关闭或禁用了服务，此时抛出 No provider 异常
             // 1. No service provider 2. Service providers are disabled
             throw new RpcException(RpcException.FORBIDDEN_EXCEPTION, "No provider available from registry " +
                     getUrl().getAddress() + " for service " + getConsumerUrl().getServiceKey() + " on consumer " +
@@ -517,6 +524,7 @@ public class RegistryDirectory<T> extends DynamicDirectory<T> implements NotifyL
         List<Invoker<T>> invokers = null;
         try {
             // Get invokers from cache, only runtime routers will be executed.
+            //routerChain = new RouterChain()
             invokers = routerChain.route(getConsumerUrl(), invocation);
         } catch (Throwable t) {
             logger.error("Failed to execute router: " + getUrl() + ", cause: " + t.getMessage(), t);
@@ -540,6 +548,12 @@ public class RegistryDirectory<T> extends DynamicDirectory<T> implements NotifyL
     }
 
     public void setRegisteredConsumerUrl(URL url) {
+        /**
+         * url  = consumer://192.168.1.103/org.apache.dubbo.demo.DemoService?application=demo-consumer
+         *        &backup=127.0.0.1:2183,127.0.0.1:2182&check=false&dubbo=2.0.2&enable-auto-migration=true&enable.auto.migration=true
+         *        &id=org.apache.dubbo.config.RegistryConfig&init=false&interface=org.apache.dubbo.demo.DemoService&mapping-type=metadata&mapping.type=metadata&metadata-type=remote
+         *        &methods=sayHello,sayHelloAsync&pid=7128&provided-by=demo-provider&qos.port=33333&side=consumer&sticky=false&timestamp=1612186853746
+         */
         if (!shouldSimplified) {
             this.registeredConsumerUrl = url.addParameters(CATEGORY_KEY, CONSUMERS_CATEGORY, CHECK_KEY,
                     String.valueOf(false));
@@ -566,6 +580,14 @@ public class RegistryDirectory<T> extends DynamicDirectory<T> implements NotifyL
     }
 
     public void buildRouterChain(URL url) {
+        /**
+         *url= consumer://192.168.1.103/org.apache.dubbo.demo.DemoService?application=demo-consumer
+         *      &backup=127.0.0.1:2183,127.0.0.1:2182&check=false&dubbo=2.0.2&enable-auto-migration=true
+         *      &enable.auto.migration=true&id=org.apache.dubbo.config.RegistryConfig&init=false
+         *      &interface=org.apache.dubbo.demo.DemoService&mapping-type=metadata&mapping.type=metadata&metadata-type=remote
+         *      &methods=sayHello,sayHelloAsync&pid=2788&provided-by=demo-provider&qos.port=33333&side=consumer
+         *      &sticky=false&timestamp=1612187328433
+         */
         this.setRouterChain(RouterChain.buildChain(url));
     }
 

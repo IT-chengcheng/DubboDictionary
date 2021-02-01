@@ -36,10 +36,24 @@ public class RouterChain<T> {
     private List<Invoker<T>> invokers = Collections.emptyList();
 
     // containing all routers, reconstruct every time 'route://' urls change.
+    /**
+     * routers:
+     *     MockInvokersSelector
+     *    TagRouter
+     *    ServiceRouter
+     *    AppRouter
+     */
     private volatile List<Router> routers = Collections.emptyList();
 
     // Fixed router instances: ConfigConditionRouter, TagRouter, e.g., the rule for each instance may change but the
     // instance will never delete or recreate.
+    /**
+     * builtinRouters:
+     *     MockInvokersSelector
+     *    TagRouter
+     *    ServiceRouter
+     *    AppRouter
+     */
     private List<Router> builtinRouters = Collections.emptyList();
 
     public static <T> RouterChain<T> buildChain(URL url) {
@@ -47,9 +61,31 @@ public class RouterChain<T> {
     }
 
     private RouterChain(URL url) {
+        /**
+         *url= consumer://192.168.1.103/org.apache.dubbo.demo.DemoService?application=demo-consumer
+         *      &backup=127.0.0.1:2183,127.0.0.1:2182&check=false&dubbo=2.0.2&enable-auto-migration=true
+         *      &enable.auto.migration=true&id=org.apache.dubbo.config.RegistryConfig&init=false
+         *      &interface=org.apache.dubbo.demo.DemoService&mapping-type=metadata&mapping.type=metadata&metadata-type=remote
+         *      &methods=sayHello,sayHelloAsync&pid=2788&provided-by=demo-provider&qos.port=33333&side=consumer
+         *      &sticky=false&timestamp=1612187328433
+         */
+        /**
+         * extensionFactories:
+         *     AppRouterFactory
+         *     MockRouterFactory
+         *     ServiceRouterFactory
+         *     TagRouterFactory
+         */
         List<RouterFactory> extensionFactories = ExtensionLoader.getExtensionLoader(RouterFactory.class)
                 .getActivateExtension(url, "router");
 
+        /**
+         * routers:
+         *   MockInvokersSelector
+         *   TagRouter
+         *   ServiceRouter
+         *   AppRouter
+         */
         List<Router> routers = extensionFactories.stream()
                 .map(factory -> factory.getRouter(url))
                 .collect(Collectors.toList());
@@ -94,7 +130,15 @@ public class RouterChain<T> {
      * @return
      */
     public List<Invoker<T>> route(URL url, Invocation invocation) {
+
         List<Invoker<T>> finalInvokers = invokers;
+        /**
+         * routers:
+         *     MockInvokersSelector
+         *    TagRouter
+         *    ServiceRouter
+         *    AppRouter
+         */
         for (Router router : routers) {
             finalInvokers = router.route(finalInvokers, url, invocation);
         }

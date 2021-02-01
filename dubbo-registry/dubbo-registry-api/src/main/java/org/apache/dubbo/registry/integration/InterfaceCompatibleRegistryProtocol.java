@@ -69,10 +69,9 @@ public class InterfaceCompatibleRegistryProtocol extends RegistryProtocol {
          * 2、服务目录是什么 : 服务目录中存储了一些和服务提供者有关的信息，通过服务目录，服务消费者可获取到服务提供者的信息，
          *       比如 ip、端口、服务协议等。通过这些信息，服务消费者就可通过 Netty 等客户端进行远程调用。在一个服务集群中，
          *       服务提供者数量并不是一成不变的，如果集群中新增了一台机器，相应地在服务目录中就要新增一条服务提供者记录。
-         *       或者，如果服务提供者的配置修改了，服务目录中的记录也要做相应的更新。如果这样说，服务目录和注册中心的功能
-         *       不就雷同了吗？确实如此，这里这么说是为了方便大家理解。实际上服务目录在获取注册中心的服务配置信息后，
+         *       或者，如果服务提供者的配置修改了，服务目录中的记录也要做相应的更新。服务目录在获取注册中心的服务配置信息后，
          *       会为每条配置信息生成一个 Invoker 对象，并把这个 Invoker 对象存储起来，这个 Invoker 才是服务目录最终持有的对象。
-         *       Invoker 有什么用呢？看名字就知道了，这是一个具有远程调用功能的对象。服务目录了可以看做是 Invoker 集合，
+         *       Invoker 有什么用呢？看名字就知道了，这是一个具有远程调用功能的对象。服务目录可以看做是 Invoker 集合，
          *       且这个集合中的元素会随注册中心的变化而进行动态调整。
          *  3、RegistryDirectory extends DynamicDirectory  implements NotifyListener
          *                               DynamicDirectory  extends AbstractDirectory
@@ -80,6 +79,10 @@ public class InterfaceCompatibleRegistryProtocol extends RegistryProtocol {
          *     AbstractDirectory 实现了 Directory 接口，这个接口包含了一个重要的方法定义，即 list(Invocation)，用于列举 Invoker
          * 5、RegistryDirectory 实现了 NotifyListener 接口，当注册中心节点信息发生变化后，
          *     RegistryDirectory 可以通过此接口方法得到变更信息，并根据变更信息动态调整内部 Invoker 列表
+         * 6、RegistryDirectory 中有几个比较重要的逻辑，
+         *        第一是 Invoker 的列举逻辑
+         *        第二是 接收服务配置变更的逻辑
+         *        第三是 Invoker 列表的刷新逻辑
          */
         return new RegistryDirectory<>(type, url);
     }
@@ -89,8 +92,8 @@ public class InterfaceCompatibleRegistryProtocol extends RegistryProtocol {
          *  cluster = MockClusterWrapper(FailoverCluster())
          *  registry = ListenerRegistryWrapper(ZookeeperRegistry())
          *  type =  org.apache.dubbo.demo.DemoService
-         *  url =  url = zookeeper://127.0.0.1:2181/org.apache.dubbo.registry.RegistryService?application=dubbo-demo-annotation-consumer
-               &dubbo=2.0.2&id=org.apache.dubbo.config.RegistryConfig#0&pid=7988&refer=经过encode的一堆值
+         *  url =  zookeeper://127.0.0.1:2181/org.apache.dubbo.registry.RegistryService?application=dubbo-demo-annotation-consumer
+         *             &backup=127.0.0.1:2183,127.0.0.1:2182&dubbo=2.0.2&id=org.apache.dubbo.config.RegistryConfig#0&pid=7988&refer=经过encode的一堆值
          */
         ClusterInvoker<T> invoker = getInvoker(cluster, registry, type, url);
         ClusterInvoker<T> serviceDiscoveryInvoker = getServiceDiscoveryInvoker(cluster, type, url);

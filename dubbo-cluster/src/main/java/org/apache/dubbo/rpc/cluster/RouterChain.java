@@ -130,12 +130,16 @@ public class RouterChain<T> {
      * @return
      */
     public List<Invoker<T>> route(URL url, Invocation invocation) {
-
+        /**
+         * 服务目录在刷新 Invoker 列表的过程中，会通过 Router 进行服务路由，筛选出符合路由规则的服务提供者。
+         * 服务路由是什么 : 服务路由包含一条路由规则，路由规则决定了服务消费者的调用目标，即规定了服务消费者可调用哪些服务提供者。
+         * Dubbo 目前提供的服务路由实现 如下四个
+         */
         List<Invoker<T>> finalInvokers = invokers;
         /**
          * routers:
          *     MockInvokersSelector
-         *    TagRouter
+         *     TagRouter
          *    ServiceRouter
          *    AppRouter
          */

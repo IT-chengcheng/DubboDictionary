@@ -74,6 +74,10 @@ public class FailbackClusterInvoker<T> extends AbstractClusterInvoker<T> {
     }
 
     private void addFailed(LoadBalance loadbalance, Invocation invocation, List<Invoker<T>> invokers, Invoker<T> lastInvoker) {
+        /**
+         * 包含了失败重试的逻辑，该方法会对 failed 进行遍历，然后依次对 Invoker 进行调用。
+         * 调用成功则将 Invoker 从 failed 中移除
+         */
         if (failTimer == null) {
             synchronized (this) {
                 if (failTimer == null) {
@@ -92,17 +96,26 @@ public class FailbackClusterInvoker<T> extends AbstractClusterInvoker<T> {
         }
     }
 
+    /**
+     * FailbackClusterInvoker 会在调用失败后，返回一个空结果给服务消费者。
+     * 并通过定时任务对失败的调用进行重传，适合执行消息通知等操作
+     */
     @Override
     protected Result doInvoke(Invocation invocation, List<Invoker<T>> invokers, LoadBalance loadbalance) throws RpcException {
         Invoker<T> invoker = null;
         try {
             checkInvokers(invokers, invocation);
+            // 选择 Invoker
             invoker = select(loadbalance, invocation, invokers, null);
+            // 进行调用
             return invoker.invoke(invocation);
         } catch (Throwable e) {
+            // 如果调用过程中发生异常，此时仅打印错误日志，不抛出异常
             logger.error("Failback to invoke method " + invocation.getMethodName() + ", wait for retry in background. Ignored exception: "
                     + e.getMessage() + ", ", e);
+            // 记录调用信息
             addFailed(loadbalance, invocation, invokers, invoker);
+            // 返回一个空结果给服务消费者
             return AsyncRpcResult.newDefaultAsyncResult(null, null, invocation); // ignore
         }
     }

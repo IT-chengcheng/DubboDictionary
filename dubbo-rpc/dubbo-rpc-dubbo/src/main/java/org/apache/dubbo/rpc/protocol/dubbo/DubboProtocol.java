@@ -431,7 +431,7 @@ public class DubboProtocol extends AbstractProtocol {
         // create rpc invoker. consumer端根据url 创建 DubboInvoker
         /**
          * getClients() 这个方法用于获取客户端实例，实例类型为 ExchangeClient。ExchangeClient 实际上并不具备通信能力，
-         * 它需要基于更底层的客户端实例进行通信。比如 NettyClient、MinaClient 等，默认情况下，Dubbo 使用 NettyClient 进行通信。
+         * 它需要基于更底层的客户端实例进行通信。比如 NettyClient、MinaClient 等，默认情况下，Dubbo 使用 NettyClient 进行通信
          */
         DubboInvoker<T> invoker = new DubboInvoker<T>(serviceType, url, getClients(url), invokers);
         invokers.add(invoker);
@@ -472,7 +472,7 @@ public class DubboProtocol extends AbstractProtocol {
                 clients[i] = shareClients.get(i);
 
             } else {
-                // 初始化新的客户端
+                // 初始化新的客户端.
                 clients[i] = initClient(url);
             }
         }
@@ -637,7 +637,7 @@ public class DubboProtocol extends AbstractProtocol {
                 client = new LazyConnectExchangeClient(url, requestHandler);
 
             } else {
-                // 创建普通 ExchangeClient 实例
+                // 创建普通 ExchangeClient 实例.
                 client = Exchangers.connect(url, requestHandler);
             }
 

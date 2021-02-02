@@ -59,6 +59,7 @@ public abstract class AbstractClient extends AbstractEndpoint implements Client 
         initExecutor(url);
 
         try {
+            // consumer 连接 provider
             doOpen();
         } catch (Throwable t) {
             close();
@@ -68,7 +69,7 @@ public abstract class AbstractClient extends AbstractEndpoint implements Client 
         }
 
         try {
-            // connect.
+            // connect.   consumer 连接 provider
             connect();
             if (logger.isInfoEnabled()) {
                 logger.info("Start " + getClass().getSimpleName() + " " + NetUtils.getLocalAddress() + " connect to the server " + getRemoteAddress());
@@ -192,7 +193,7 @@ public abstract class AbstractClient extends AbstractEndpoint implements Client 
                         + NetUtils.getLocalHost() + " using dubbo version " + Version.getVersion() + ", cause: client status is closed or closing.");
                 return;
             }
-
+            // consumer 连接 provider
             doConnect();
 
             if (!isConnected()) {

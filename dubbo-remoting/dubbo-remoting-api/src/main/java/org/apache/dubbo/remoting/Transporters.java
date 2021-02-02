@@ -83,7 +83,7 @@ public class Transporters {
         }
         // 获取 Transporter 自适应拓展类，并调用 connect 方法生成 Client 实例
         // getTransporter 方法返回的是自适应拓展类，该类会在运行时根据客户端类型加载指定的 Transporter 实现类。
-        // 若用户未配置客户端类型，则默认加载 NettyTransporter，并调用该类的 connect 方法
+        // 若用户未配置客户端类型，则默认加载 NettyTransporter，并调用该类的 connect 方法.
         return getTransporter().connect(url, handler);
     }
 

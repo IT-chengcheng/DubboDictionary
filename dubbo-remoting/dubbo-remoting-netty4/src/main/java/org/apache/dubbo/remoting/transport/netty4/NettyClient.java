@@ -89,6 +89,7 @@ public class NettyClient extends AbstractClient {
      */
     @Override
     protected void doOpen() throws Throwable {
+        // consumer 连接 provider
         final NettyClientHandler nettyClientHandler = new NettyClientHandler(getUrl(), this);
         bootstrap = new Bootstrap();
         bootstrap.group(NIO_EVENT_LOOP_GROUP)
@@ -128,7 +129,9 @@ public class NettyClient extends AbstractClient {
 
     @Override
     protected void doConnect() throws Throwable {
+
         long start = System.currentTimeMillis();
+        // consumer 连接 provider
         ChannelFuture future = bootstrap.connect(getConnectAddress());
         try {
             boolean ret = future.awaitUninterruptibly(getConnectTimeout(), MILLISECONDS);

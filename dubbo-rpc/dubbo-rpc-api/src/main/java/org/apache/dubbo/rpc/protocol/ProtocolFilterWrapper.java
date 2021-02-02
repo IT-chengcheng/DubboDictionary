@@ -52,6 +52,7 @@ public class ProtocolFilterWrapper implements Protocol {
     }
 
     private static <T> Invoker<T> buildInvokerChain(final Invoker<T> invoker, String key, String group) {
+
         Invoker<T> last = invoker;
         List<Filter> filters = ExtensionLoader.getExtensionLoader(Filter.class).getActivateExtension(invoker.getUrl(), key, group);
 
@@ -59,6 +60,10 @@ public class ProtocolFilterWrapper implements Protocol {
             for (int i = filters.size() - 1; i >= 0; i--) {
                 final Filter filter = filters.get(i);
                 final Invoker<T> next = last;
+                /**
+                 * invoker = ListenerInvokerWrapper
+                 * 对入参invoker进行封装，创建一个匿名内部类invoker
+                 */
                 last = new Invoker<T>() {
 
                     @Override
@@ -158,11 +163,17 @@ public class ProtocolFilterWrapper implements Protocol {
 
     @Override
     public <T> Invoker<T> refer(Class<T> type, URL url) throws RpcException {
+        // 只有协议是 "registry" 才进入这里
         if (UrlUtils.isRegistry(url)) {
             return protocol.refer(type, url);
         }
+        /**
+         * 1、当协议是 非"registry"时，比如dubbo 进入下面的逻辑
+         * 2、这就是consumer端 根据url 创建invoker的原始入口
+         */
         return buildInvokerChain(protocol.refer(type, url), REFERENCE_FILTER_KEY, CommonConstants.CONSUMER);
     }
+
 
     @Override
     public void destroy() {

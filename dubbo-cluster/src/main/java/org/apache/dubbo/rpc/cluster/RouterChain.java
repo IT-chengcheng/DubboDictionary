@@ -154,6 +154,7 @@ public class RouterChain<T> {
      * Notify whenever addresses in registry change.
      */
     public void setInvokers(List<Invoker<T>> invokers) {
+        // 将url转变完成 Invoker 存起来
         this.invokers = (invokers == null ? Collections.emptyList() : invokers);
         routers.forEach(router -> router.notify(this.invokers));
     }

@@ -192,6 +192,9 @@ public class RegistryDirectory<T> extends DynamicDirectory<T> implements NotifyL
     private void refreshOverrideAndInvoker(List<URL> urls) {
         // mock zookeeper://xxx?mock=return null
         overrideConsumerUrl();
+        /**
+         * 里面很多逻辑，包括 consumer端将 url 转成 Invoker.
+         */
         refreshInvoker(urls);
     }
 
@@ -236,7 +239,7 @@ public class RegistryDirectory<T> extends DynamicDirectory<T> implements NotifyL
             if (invokerUrls.isEmpty()) {
                 return;
             }
-            // 将 url 转成 Invoker
+            //  consumer端将 url 转成 Invoker！！！
             Map<URL, Invoker<T>> newUrlInvokerMap = toInvokers(invokerUrls);// Translate url list to Invoker map
 
             /**
@@ -256,6 +259,7 @@ public class RegistryDirectory<T> extends DynamicDirectory<T> implements NotifyL
             List<Invoker<T>> newInvokers = Collections.unmodifiableList(new ArrayList<>(newUrlInvokerMap.values()));
             // pre-route and build cache, notice that route cache should build on original Invoker list.
             // toMergeMethodInvokerMap() will wrap some invokers having different groups, those wrapped invokers not should be routed.
+           // 将url转变完成 Invoker 存储到 RouterChain中
             routerChain.setInvokers(newInvokers);
             // 合并多个组的 Invoker
             this.invokers = multiGroup ? toMergeInvokerList(newInvokers) : newInvokers;
@@ -393,7 +397,11 @@ public class RegistryDirectory<T> extends DynamicDirectory<T> implements NotifyL
                         enabled = url.getParameter(ENABLED_KEY, true);
                     }
                     if (enabled) {
-                        // 调用 refer 获取 Invoker
+                        // consumer端将 url 转成 Invoker！！！
+                        // url = dubbo://192.168.0.144:20880/org.apache.dubbo.demo.DemoService?anyhost=true&application=demo-consumer
+                        // &interface=org.apache.dubbo.demo.DemoService&loadbalance=roundrobin
+                        // &methods=sayHello,sayHelloAsync&provided-by=demo-provider
+                        // &register.ip=192.168.0.144&sticky=false
                         invoker = new InvokerDelegate<>(protocol.refer(serviceType, url), url, providerUrl);
                     }
                 } catch (Throwable t) {

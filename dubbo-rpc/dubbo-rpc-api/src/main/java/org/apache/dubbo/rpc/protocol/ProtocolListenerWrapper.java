@@ -69,9 +69,14 @@ public class ProtocolListenerWrapper implements Protocol {
 
     @Override
     public <T> Invoker<T> refer(Class<T> type, URL url) throws RpcException {
+        // 只有协议是 "registry" 才进入这里
         if (UrlUtils.isRegistry(url)) {
             return protocol.refer(type, url);
         }
+        /**
+         * 1、当协议是 非"registry"时，比如dubbo进入下面的逻辑
+         * 2、对创建好的Invoker进行一个wrap
+         */
         return new ListenerInvokerWrapper<T>(protocol.refer(type, url),
                 Collections.unmodifiableList(
                         ExtensionLoader.getExtensionLoader(InvokerListener.class)

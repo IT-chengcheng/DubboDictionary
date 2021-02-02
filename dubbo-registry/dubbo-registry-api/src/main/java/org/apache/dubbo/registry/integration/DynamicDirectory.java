@@ -141,6 +141,7 @@ public abstract class DynamicDirectory<T> extends AbstractDirectory<T> implement
          * 注意子类实现！！！！
          */
         setConsumerUrl(url);
+
         registry.subscribe(url, this);
     }
 

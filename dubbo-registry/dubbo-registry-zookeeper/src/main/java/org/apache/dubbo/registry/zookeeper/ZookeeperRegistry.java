@@ -162,6 +162,9 @@ public class ZookeeperRegistry extends FailbackRegistry {
 
     @Override
     public void doSubscribe(final URL url, final NotifyListener listener) {
+        /**
+         * 添加对  provider服务节点的监听！！，及时更新本地服务目录！！！
+         */
         try {
             if (ANY_VALUE.equals(url.getServiceInterface())) {
                 String root = toRootPath();
@@ -190,14 +193,21 @@ public class ZookeeperRegistry extends FailbackRegistry {
             } else {
                 List<URL> urls = new ArrayList<>();
                 for (String path : toCategoriesPath(url)) {
+                    // path = /dubbo/org.apache.dubbo.demo.DemoService/providers
                     ConcurrentMap<NotifyListener, ChildListener> listeners = zkListeners.computeIfAbsent(url, k -> new ConcurrentHashMap<>());
-                    ChildListener zkListener = listeners.computeIfAbsent(listener, k -> (parentPath, currentChilds) -> ZookeeperRegistry.this.notify(url, k, toUrlsWithEmpty(url, parentPath, currentChilds)));
+                    ChildListener zkListener = listeners.computeIfAbsent(listener, k ->
+                            (parentPath, currentChilds) ->
+                                    ZookeeperRegistry.this.notify(url, k, toUrlsWithEmpty(url, parentPath, currentChilds))
+                    );
                     zkClient.create(path, false);
                     List<String> children = zkClient.addChildListener(path, zkListener);
                     if (children != null) {
                         urls.addAll(toUrlsWithEmpty(url, path, children));
                     }
                 }
+                /**
+                 * 主动触发notify 进行构建服务目录
+                 */
                 notify(url, listener, urls);
             }
         } catch (Throwable e) {

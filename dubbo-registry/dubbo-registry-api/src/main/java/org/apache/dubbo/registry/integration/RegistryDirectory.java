@@ -93,11 +93,16 @@ public class RegistryDirectory<T> extends DynamicDirectory<T> implements NotifyL
 
     @Override
     public void subscribe(URL url) {
+        // url = zookeeper://127.0.0.1:2181/org.apache.dubbo.registry.RegistryService?application=demo-consumer&backup=127.0.0.1:2183,127.0.0.1:2182&dubbo=2.0.2&enable-auto-migration=true&enable.auto.migration=true&id=org.apache.dubbo.config.RegistryConfig&mapping-type=metadata&mapping.type=metadata&pid=2012&qos.port=33333&refer=application%3Ddemo-consumer%26check%3Dfalse%26dubbo%3D2.0.2%26enable-auto-migration%3Dtrue%26enable.auto.migration%3Dtrue%26init%3Dfalse%26interface%3Dorg.apache.dubbo.demo.DemoService%26loadbalance%3Droundrobin%26mapping-type%3Dmetadata%26mapping.type%3Dmetadata%26metadata-type%3Dremote%26methods%3DsayHello%2CsayHelloAsync%26pid%3D2012%26provided-by%3Ddemo-provider%26qos.port%3D33333%26register.ip%3D192.168.1.103%26side%3Dconsumer%26sticky%3Dfalse%26timestamp%3D1612274033150&timestamp=1612274033188
+
         setConsumerUrl(url);
 //        overrideConsumerUrl();
         CONSUMER_CONFIGURATION_LISTENER.addNotifyListener(this);
         referenceConfigurationListener = new ReferenceConfigurationListener(this, url);
+        // registry = ListenerRegistryWrapper(ZookeeperRegistry());
+        // ZookeeperRegistry extends FailbackRegistry ，最终进入父类 FailbackRegistry
         registry.subscribe(url, this);
+
     }
 
     @Override

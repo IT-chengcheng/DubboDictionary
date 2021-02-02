@@ -586,7 +586,8 @@ public class RegistryProtocol implements Protocol {
         }
         directory.buildRouterChain(urlToRegistry);
         /**
-         * 添加各种监听器 订阅 providers、configurators、routers 等节点数据
+         * 1、添加各种监听器 订阅 providers、configurators、routers 等节点数据
+         * 2、把url处理成 Invoker，然后存到RouterChain中
          */
         directory.subscribe(toSubscribeUrl(urlToRegistry));
 
@@ -603,6 +604,8 @@ public class RegistryProtocol implements Protocol {
          *       Invoker 进行远程调用即可，至于具体调用哪个服务提供者，以及调用失败后如何处理等问题，现在都交给集群模块去处理。
          *       集群模块是服务提供者和服务消费者的中间层，为服务消费者屏蔽了服务提供者的情况，这样服务消费者就可以专心处理远程调用
          *       相关事宜。比如发请求，接受服务提供者返回的数据等。这就是集群的作用。
+         *       -- 集群模块处于服务提供者和消费者之间，对于服务消费者来说，集群可向其屏蔽服务提供者集群的情况，
+         *           使其能够专心进行远程调用。除此之外，通过集群模块，我们还可以对服务之间的调用链路进行编排优化，治理服务
          * 2、集群容错的所有组件。包含 Cluster、Cluster Invoker、Directory、Router 和 LoadBalance 等
          * 3、集群工作过程可分为两个阶段:
          *     第一个阶段是在服务消费者初始化期间，集群 Cluster 实现类  为服务消费者创建 Cluster Invoker 实例,如上return代码
@@ -624,7 +627,7 @@ public class RegistryProtocol implements Protocol {
          *     Cluster Invoker是一种 Invoker ：服务提供者的选择逻辑，以及远程调用失败后的的处理逻辑均是封装在 Cluster Invoker 中。
          * 6、Dubbo的集群容错5种方式
          *     Failover Cluster - 失败自动切换；  Failfast Cluster - 快速失败；       Failsafe Cluster - 失败安全
-         *     Failback Cluster - 失败自动恢复；  Forking Cluster - 并行调用多个服务提供者
+         *     Failback Cluster - 失败自动恢复；  Forking Cluster - 并行调用多个服务提供者;  BroadcastClusterInvoker 广播调用
          *
          *     默认采用 Failover Cluster 模式，现在以Failover Cluster 为例介绍，其他类似：
          *      FailoverCluster extends AbstractCluster( implements Cluster )

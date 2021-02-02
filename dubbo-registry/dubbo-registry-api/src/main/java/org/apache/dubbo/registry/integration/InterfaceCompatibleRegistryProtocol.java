@@ -95,6 +95,7 @@ public class InterfaceCompatibleRegistryProtocol extends RegistryProtocol {
          *  url =  zookeeper://127.0.0.1:2181/org.apache.dubbo.registry.RegistryService?application=dubbo-demo-annotation-consumer
          *             &backup=127.0.0.1:2183,127.0.0.1:2182&dubbo=2.0.2&id=org.apache.dubbo.config.RegistryConfig#0&pid=7988&refer=经过encode的一堆值
          */
+        // invoker =MockClusterInvoker（AbstractCluster$InterceptorInvokerNode(FailoverClusterInvoker(),ConsumerContextClusterInterceptor())）
         ClusterInvoker<T> invoker = getInvoker(cluster, registry, type, url);
         ClusterInvoker<T> serviceDiscoveryInvoker = getServiceDiscoveryInvoker(cluster, type, url);
         ClusterInvoker<T> migrationInvoker = new MigrationInvoker<>(invoker, serviceDiscoveryInvoker);

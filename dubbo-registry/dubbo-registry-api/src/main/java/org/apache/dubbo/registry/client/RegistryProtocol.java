@@ -586,7 +586,7 @@ public class RegistryProtocol implements Protocol {
         }
         directory.buildRouterChain(urlToRegistry);
         /**
-         * 1、添加各种监听器 订阅 providers、configurators、routers 等节点数据
+         * 1、添加各种监听器 监听 providers、configurators、routers 等节点数据，也就是说consumer监听zookeeper上的服务节点数据
          * 2、把url处理成 Invoker，然后存到RouterChain中
          */
         directory.subscribe(toSubscribeUrl(urlToRegistry));

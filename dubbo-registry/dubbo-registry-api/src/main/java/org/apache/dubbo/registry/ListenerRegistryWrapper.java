@@ -101,7 +101,12 @@ public class ListenerRegistryWrapper implements Registry {
 
     @Override
     public void subscribe(URL url, NotifyListener listener) {
-        try {// 订阅
+        try {
+            /**
+             * registry = ZookeeperRegistry extends FailbackRegistry ，最终进入父类 FailbackRegistry
+             * 1、添加各种监听器 监听 providers、configurators、routers 等节点数据，也就是说consumer监听zookeeper上的服务节点数据
+             * 2、把url处理成 Invoker，然后存到RouterChain中
+             */
             registry.subscribe(url, listener);
         } finally {
             if (CollectionUtils.isNotEmpty(listeners)) {

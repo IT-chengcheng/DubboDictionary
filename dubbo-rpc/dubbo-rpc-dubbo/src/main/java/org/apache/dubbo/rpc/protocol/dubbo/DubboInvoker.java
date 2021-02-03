@@ -100,6 +100,7 @@ public class DubboInvoker<T> extends AbstractInvoker<T> {
         try {
             // isOneway 为 true，表示“单向”通信
             boolean isOneway = RpcUtils.isOneway(getUrl(), invocation);
+            // Dubbo请求超时时间默认是 1000毫秒
             int timeout = calculateTimeout(invocation, methodName);
             invocation.put(TIMEOUT_KEY, timeout);
             // 异步无返回值    Oneway单向的
@@ -110,6 +111,7 @@ public class DubboInvoker<T> extends AbstractInvoker<T> {
                 // 返回一个空的 RpcResult
                 return AsyncRpcResult.newDefaultAsyncResult(invocation);
             } else {
+                // 异步有返回值  并且是双向通信twoWay， 并且是dubbo自己的线程池（Dubbo所有的线程池好像都是用的一个创建方式）
                 ExecutorService executor = getCallbackExecutor(getUrl(), inv);
                 CompletableFuture<AppResponse> appResponseFuture =
                         currentClient.request(inv, timeout, executor).thenApply(
@@ -175,6 +177,9 @@ public class DubboInvoker<T> extends AbstractInvoker<T> {
         }
     }
 
+    /**
+     * 获取url中 程序员设置的请求超时时间， Dubbo请求超时时间默认是 1000毫秒
+     */
     private int calculateTimeout(Invocation invocation, String methodName) {
         Object countdown = RpcContext.getContext().get(TIME_COUNTDOWN_KEY);
         int timeout = DEFAULT_TIMEOUT;

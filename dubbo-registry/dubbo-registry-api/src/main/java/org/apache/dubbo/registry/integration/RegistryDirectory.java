@@ -413,6 +413,7 @@ public class RegistryDirectory<T> extends DynamicDirectory<T> implements NotifyL
                         // &interface=org.apache.dubbo.demo.DemoService&loadbalance=roundrobin
                         // &methods=sayHello,sayHelloAsync&provided-by=demo-provider
                         // &register.ip=192.168.0.144&sticky=false
+                        // invoker= RegistryDirectory$InvokerDelegate(ProtocolFilterWrapper$匿名内部类(ListenerInvokerWrapper(AsyncToSyncInvoker(DubboInvoker(ExchangeClient)))))
                         invoker = new InvokerDelegate<>(protocol.refer(serviceType, url), url, providerUrl);
                     }
                 } catch (Throwable t) {

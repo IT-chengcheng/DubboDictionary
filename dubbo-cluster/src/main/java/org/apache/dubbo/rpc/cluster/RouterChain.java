@@ -33,6 +33,7 @@ import java.util.stream.Collectors;
 public class RouterChain<T> {
 
     // full list of addresses from registry, classified by method name.
+    // invoker= RegistryDirectory$InvokerDelegate(ProtocolFilterWrapper$匿名内部类(ListenerInvokerWrapper(AsyncToSyncInvoker(DubboInvoker(ExchangeClient)))))
     private List<Invoker<T>> invokers = Collections.emptyList();
 
     // containing all routers, reconstruct every time 'route://' urls change.
@@ -154,6 +155,7 @@ public class RouterChain<T> {
      * Notify whenever addresses in registry change.
      */
     public void setInvokers(List<Invoker<T>> invokers) {
+        // invoker= RegistryDirectory$InvokerDelegate(ProtocolFilterWrapper$匿名内部类(ListenerInvokerWrapper(AsyncToSyncInvoker(DubboInvoker(ExchangeClient)))))
         // 将url转变完成 Invoker 存起来
         this.invokers = (invokers == null ? Collections.emptyList() : invokers);
         routers.forEach(router -> router.notify(this.invokers));

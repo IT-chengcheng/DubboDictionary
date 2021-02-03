@@ -85,10 +85,15 @@ public class MockClusterInvoker<T> implements ClusterInvoker<T> {
 
     @Override
     public Result invoke(Invocation invocation) throws RpcException {
+        /**
+         * 内部封装了服务降级逻辑
+         */
         Result result = null;
-
+        // 获取 mock 配置值
         String value = getUrl().getMethodParameter(invocation.getMethodName(), MOCK_KEY, Boolean.FALSE.toString()).trim();
         if (value.length() == 0 || "false".equalsIgnoreCase(value)) {
+            // 无 mock 逻辑，直接调用其他 Invoker 对象的 invoke 方法，
+            // 比如 FailoverClusterInvoker
             //no mock
             result = this.invoker.invoke(invocation);
         } else if (value.startsWith("force")) {
@@ -96,10 +101,13 @@ public class MockClusterInvoker<T> implements ClusterInvoker<T> {
                 logger.warn("force-mock: " + invocation.getMethodName() + " force-mock enabled , url : " + getUrl());
             }
             //force:direct mock
+            // force:xxx 直接执行 mock 逻辑，不发起远程调用
             result = doMockInvoke(invocation, null);
         } else {
             //fail-mock
+            // fail:xxx 表示消费方对调用服务失败后，再执行 mock 逻辑，不抛出异常
             try {
+                // 调用其他 Invoker 对象的 invoke 方法
                 result = this.invoker.invoke(invocation);
 
                 //fix:#4585
@@ -108,6 +116,7 @@ public class MockClusterInvoker<T> implements ClusterInvoker<T> {
                     if(rpcException.isBiz()){
                         throw  rpcException;
                     }else {
+                        // 调用失败，执行 mock 逻辑
                         result = doMockInvoke(invocation, rpcException);
                     }
                 }

@@ -51,11 +51,14 @@ public class InvokerInvocationHandler implements InvocationHandler {
 
     @Override
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-        if (method.getDeclaringClass() == Object.class) {// 一般不会进这个判断
+
+        // 拦截定义在 Object 类中的方法（未被子类重写），比如 wait/notify
+        if (method.getDeclaringClass() == Object.class) {
             return method.invoke(invoker, args);
         }
         String methodName = method.getName();
         Class<?>[] parameterTypes = method.getParameterTypes();
+        // 如果 toString、hashCode 和 equals 等方法被子类重写了，这里也直接调用
         if (parameterTypes.length == 0) {
             if ("toString".equals(methodName)) {
                 return invoker.toString();
@@ -68,6 +71,7 @@ public class InvokerInvocationHandler implements InvocationHandler {
         } else if (parameterTypes.length == 1 && "equals".equals(methodName)) {
             return invoker.equals(args[0]);
         }
+        // 将 method 和 args 封装到 RpcInvocation 中，并执行后续的调用
         RpcInvocation rpcInvocation = new RpcInvocation(method, invoker.getInterface().getName(), protocolServiceKey, args);
         String serviceKey = invoker.getUrl().getServiceKey();
         rpcInvocation.setTargetServiceUniqueName(serviceKey);
@@ -79,7 +83,8 @@ public class InvokerInvocationHandler implements InvocationHandler {
             rpcInvocation.put(Constants.CONSUMER_MODEL, consumerModel);
             rpcInvocation.put(Constants.METHOD_MODEL, consumerModel.getMethodModel(method));
         }
-
+        // invoker =InterfaceCompatibleRegistryProtocol$MigrationInvoker(MockClusterInvoker(AbstractCluster$InterceptorInvokerNode(FailoverClusterInvoker())))
+        // FailoverClusterInvoker拥有Directory属性，所以会从Directory里经过路由，负载均衡 选择最终执行的invoker=RegistryDirectory$InvokerDelegate(ProtocolFilterWrapper$匿名内部类(ListenerInvokerWrapper(AsyncToSyncInvoker(DubboInvoker(ExchangeClient)))))
         return invoker.invoke(rpcInvocation).recreate();
     }
 }

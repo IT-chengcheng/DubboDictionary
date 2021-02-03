@@ -115,7 +115,7 @@ public interface CommonConstants {
     int DEFAULT_ALIVE = 60 * 1000;
 
     String TIMEOUT_KEY = "timeout";
-
+    // Dubbo请求超时时间默认是 1000毫秒
     int DEFAULT_TIMEOUT = 1000;
 
     // used by invocation attachments to transfer timeout from Consumer to Provider.

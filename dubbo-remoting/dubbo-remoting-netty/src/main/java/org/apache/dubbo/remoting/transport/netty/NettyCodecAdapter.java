@@ -81,6 +81,7 @@ final class NettyCodecAdapter {
                     org.apache.dubbo.remoting.buffer.ChannelBuffers.dynamicBuffer(1024);
             NettyChannel channel = NettyChannel.getOrAddChannel(ch, url, handler);
             try {
+                //codec =  ExchangeCodec
                 codec.encode(channel, buffer, msg);
             } finally {
                 NettyChannel.removeChannelIfDisconnected(ch);

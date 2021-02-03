@@ -67,6 +67,7 @@ public class NettyClient extends AbstractClient {
         // @see org.jboss.netty.channel.socket.SocketChannelConfig
         bootstrap.setOption("keepAlive", true);
         bootstrap.setOption("tcpNoDelay", true);
+        //  如果不设置超时，连接会一直占用本地线程，端口，连接客户端一多，阻塞在那里，会导致本地端口用尽及CPU压力
         bootstrap.setOption("connectTimeoutMillis", getConnectTimeout());
         final NettyHandler nettyHandler = new NettyHandler(getUrl(), this);
         bootstrap.setPipelineFactory(new ChannelPipelineFactory() {
@@ -160,6 +161,7 @@ public class NettyClient extends AbstractClient {
         if (c == null || !c.isConnected()) {
             return null;
         }
+        // 获取一个 NettyChannel 类型对象
         return NettyChannel.getOrAddChannel(c, getUrl(), this);
     }
 

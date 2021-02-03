@@ -42,6 +42,7 @@ public class Request {
     private Object mData;
 
     public Request() {
+        // 新建 Request时，会创建这个ID
         mId = newId();
     }
 

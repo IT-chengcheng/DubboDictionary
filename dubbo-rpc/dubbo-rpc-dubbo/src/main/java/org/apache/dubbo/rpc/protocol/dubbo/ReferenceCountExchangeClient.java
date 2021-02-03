@@ -40,12 +40,19 @@ import static org.apache.dubbo.rpc.protocol.dubbo.Constants.LAZY_CONNECT_INITIAL
 final class ReferenceCountExchangeClient implements ExchangeClient {
 
     private final URL url;
+    /**
+     * ReferenceCountExchangeClient 内部定义了一个引用计数变量 referenceCount，每当该对象被引用一次 referenceCount 都会进行自增。
+     * 每当 close 方法被调用时，referenceCount 进行自减。ReferenceCountExchangeClient 内部仅实现了一个引用计数的功能，
+     * 其他方法并无复杂逻辑，均是直接调用被装饰对象的相关方法。
+     */
     private final AtomicInteger referenceCount = new AtomicInteger(0);
 
     private ExchangeClient client;
 
     public ReferenceCountExchangeClient(ExchangeClient client) {
+        // client = HeaderExchangeClient（NettyClient）
         this.client = client;
+        // 引用计数自增
         referenceCount.incrementAndGet();
         this.url = client.getUrl();
     }
@@ -57,6 +64,7 @@ final class ReferenceCountExchangeClient implements ExchangeClient {
 
     @Override
     public CompletableFuture<Object> request(Object request) throws RemotingException {
+        // 直接调用被装饰对象的同签名方法
         return client.request(request);
     }
 
@@ -77,6 +85,7 @@ final class ReferenceCountExchangeClient implements ExchangeClient {
 
     @Override
     public CompletableFuture<Object> request(Object request, int timeout) throws RemotingException {
+        // 直接调用被装饰对象的同签名方法
         return client.request(request, timeout);
     }
 
@@ -155,6 +164,7 @@ final class ReferenceCountExchangeClient implements ExchangeClient {
 
     @Override
     public void close(int timeout) {
+        // referenceCount 自减
         if (referenceCount.decrementAndGet() <= 0) {
             if (timeout == 0) {
                 client.close();
@@ -201,6 +211,7 @@ final class ReferenceCountExchangeClient implements ExchangeClient {
     /**
      * The reference count of current ExchangeClient, connection will be closed if all invokers destroyed.
      */
+    /** 引用计数自增，该方法由外部调用 */
     public void incrementAndGetCount() {
         referenceCount.incrementAndGet();
     }

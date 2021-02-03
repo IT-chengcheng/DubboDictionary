@@ -55,10 +55,13 @@ public class HeaderExchangeClient implements ExchangeClient {
 
     public HeaderExchangeClient(Client client, boolean startTimer) {
         Assert.notNull(client, "Client can't be null");
+        // NettyClient
         this.client = client;
+        // 创建 HeaderExchangeChannel 对象
         this.channel = new HeaderExchangeChannel(client);
 
         if (startTimer) {
+            //开启心跳检测定时器
             URL url = client.getUrl();
             startReconnectTask(url);
             startHeartBeatTask(url);
@@ -132,6 +135,7 @@ public class HeaderExchangeClient implements ExchangeClient {
 
     @Override
     public void close() {
+        // 停止心跳检测定时器
         doClose();
         channel.close();
     }

@@ -86,6 +86,24 @@ public class DubboInvoker<T> extends AbstractInvoker<T> {
      *  首先服务消费者通过代理对象 Proxy 发起远程调用，接着通过网络客户端 Client 将编码后的请求发送给服务提供方的网络层上，也就是 Server。
      *  Server 在收到请求后，首先要做的事情是对数据包进行解码。然后将解码后的请求发送至分发器 Dispatcher，再由分发器将请求派发到
      *  指定的线程池上，最后由线程池调用具体的服务。
+     *
+     * 以 DemoService 为例，将 sayHello 方法的整个调用路径贴出来:
+     *  proxy0#sayHello(String)
+     —> InvokerInvocationHandler#invoke(Object, Method, Object[])
+     —> MockClusterInvoker#invoke(Invocation)
+     —> AbstractClusterInvoker#invoke(Invocation)
+     —> FailoverClusterInvoker#doInvoke(Invocation, List<Invoker<T>>, LoadBalance)
+     —> Filter#invoke(Invoker, Invocation)  // 包含多个 Filter 调用
+     —> ListenerInvokerWrapper#invoke(Invocation)
+     —> AbstractInvoker#invoke(Invocation)
+     —> DubboInvoker#doInvoke(Invocation)
+     —> ReferenceCountExchangeClient#request(Object, int)
+     —> HeaderExchangeClient#request(Object, int)
+     —> HeaderExchangeChannel#request(Object, int)
+     —> AbstractPeer#send(Object)
+     —> AbstractClient#send(Object, boolean)
+     —> NettyChannel#send(Object, boolean)
+     —> NioClientSocketChannel#write(Object)
      */
     @Override
     protected Result doInvoke(final Invocation invocation) throws Throwable {
@@ -102,7 +120,7 @@ public class DubboInvoker<T> extends AbstractInvoker<T> {
         } else {
             currentClient = clients[index.getAndIncrement() % clients.length];
         }
-
+       // currentClient = ReferenceCountExchangeClient（HeaderExchangeClient（HeaderExchangeChannel（NettyClient）））
         try {
             // isOneway 为 true，表示“单向”通信
             boolean isOneway = RpcUtils.isOneway(getUrl(), invocation);
@@ -118,10 +136,14 @@ public class DubboInvoker<T> extends AbstractInvoker<T> {
                 return AsyncRpcResult.newDefaultAsyncResult(invocation);
             } else {
                 // 异步有返回值  并且是双向通信twoWay， 并且是dubbo自己的线程池（Dubbo所有的线程池好像都是用的一个创建方式）
+                // 但是注意一点,这里只是异步调用，调用的地方还是同步的等待，因为最终会调用到CompletableFuture.get（），这个方法会阻塞。
+                // 除非接口返回值是CompletableFuture<String> c,让程序员手动c.get（），这才是真正的异步调用
                 ExecutorService executor = getCallbackExecutor(getUrl(), inv);
+                // HeaderExchangeChannel的request（）方法生成的 CompletableFuture appResponseFuture
                 CompletableFuture<AppResponse> appResponseFuture =
                         currentClient.request(inv, timeout, executor).thenApply(
                                 // 异步拿到 provider响应给consumer的结果 关键点 2
+                                // 这个代码块是异步调用的，等CompletableFuture.complete(obj)执行完时，就会触发这个代码块
                                 obj -> (AppResponse) obj
                         );
                 // save for 2.6.x compatibility, for example, TraceFilter in Zipkin uses com.alibaba.xxx.FutureAdapter

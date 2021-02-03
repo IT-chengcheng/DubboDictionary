@@ -49,7 +49,11 @@ public class DefaultFuture extends CompletableFuture<Object> {
     private static final Logger logger = LoggerFactory.getLogger(DefaultFuture.class);
 
     private static final Map<Long, Channel> CHANNELS = new ConcurrentHashMap<>();
-
+    /**
+     * 类似于 请求id 与 请求线程的映射，这个缓存超级重要！！！！
+     * 当provider返回给consumer消息时，会将这个id返回来，然后
+     * 通过这个id找到之前的发送线程，然后返回给客户端数据
+     */
     private static final Map<Long, DefaultFuture> FUTURES = new ConcurrentHashMap<>();
 
     public static final Timer TIME_OUT_TIMER = new HashedWheelTimer(
@@ -79,9 +83,11 @@ public class DefaultFuture extends CompletableFuture<Object> {
     private DefaultFuture(Channel channel, Request request, int timeout) {
         this.channel = channel;
         this.request = request;
+        // 获取请求 id，这个 id 很重要，用来与当前请求线程做一个映射，当provider返回给consumer消息时，会将这个id返回来，然后
+        // 通过这个id找到之前的发送线程，然后返回给客户端数据
         this.id = request.getId();
         this.timeout = timeout > 0 ? timeout : channel.getUrl().getPositiveParameter(TIMEOUT_KEY, DEFAULT_TIMEOUT);
-        // put into waiting map.
+        // put into waiting map.   存储 <requestId, DefaultFuture> 映射关系到 FUTURES 中
         FUTURES.put(id, this);
         CHANNELS.put(id, channel);
     }

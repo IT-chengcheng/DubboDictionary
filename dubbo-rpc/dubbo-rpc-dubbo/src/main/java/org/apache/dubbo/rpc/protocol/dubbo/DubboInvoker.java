@@ -113,7 +113,7 @@ public class DubboInvoker<T> extends AbstractInvoker<T> {
                 ExecutorService executor = getCallbackExecutor(getUrl(), inv);
                 CompletableFuture<AppResponse> appResponseFuture =
                         currentClient.request(inv, timeout, executor).thenApply(
-                                // 异步拿到 provider响应给consumer的结果 关键点2
+                                // 异步拿到 provider响应给consumer的结果 关键点 2
                                 obj -> (AppResponse) obj
                         );
                 // save for 2.6.x compatibility, for example, TraceFilter in Zipkin uses com.alibaba.xxx.FutureAdapter

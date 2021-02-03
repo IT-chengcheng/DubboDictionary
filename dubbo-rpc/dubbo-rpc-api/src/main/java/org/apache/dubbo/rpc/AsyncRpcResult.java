@@ -143,6 +143,7 @@ public class AsyncRpcResult implements Result {
     public Result getAppResponse() {
         try {
             if (responseFuture.isDone()) {
+                // 异步拿到 provider响应给consumer的结果 关键点3
                 return responseFuture.get();
             }
         } catch (Exception e) {

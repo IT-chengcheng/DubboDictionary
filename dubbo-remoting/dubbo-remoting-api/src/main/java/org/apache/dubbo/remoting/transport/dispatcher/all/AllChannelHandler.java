@@ -55,6 +55,12 @@ public class AllChannelHandler extends WrappedChannelHandler {
         }
     }
 
+    /**    切记：consumer接受处理消息的逻辑 与 provider 接受处理消息的逻辑一样
+     * Dubbo 将底层通信框架中接收请求的线程称为 IO 线程。如果一些事件处理逻辑可以很快执行完，比如只在内存打一个标记，
+     * 此时直接在 IO 线程上执行该段逻辑即可。但如果事件的处理逻辑比较耗时，比如该段逻辑会发起数据库查询或者 HTTP 请求。
+     * 此时我们就不应该让事件处理逻辑在 IO 线程上执行，而是应该派发到线程池中去执行。原因也很简单，IO 线程主要用于接收请求，
+     * 如果 IO 线程被占满，将导致它不能接收新的请求。
+     */
     @Override
     public void received(Channel channel, Object message) throws RemotingException {
         /**

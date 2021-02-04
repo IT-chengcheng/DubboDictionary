@@ -27,8 +27,9 @@
     </dubbo:application>
 
     <!--    <dubbo:metadata-report address="zookeeper://127.0.0.1:2181"/>-->
+    <dubbo:consumer loadbalance="roundrobin" />
 
-    <dubbo:registry address="zookeeper://127.0.0.1:2181"/>
+    <dubbo:registry protocol="zookeeper" address="127.0.0.1:2181,127.0.0.1:2183,127.0.0.1:2182"/>
 
     <dubbo:reference provided-by="demo-provider" id="demoService" check="false"
                      interface="org.apache.dubbo.demo.DemoService"/>

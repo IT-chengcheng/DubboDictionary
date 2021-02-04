@@ -78,6 +78,7 @@ public class HeaderExchangeHandler implements ChannelHandlerDelegate {
     void handleRequest(final ExchangeChannel channel, Request req) throws RemotingException {
         Response res = new Response(req.getId(), req.getVersion());
         if (req.isBroken()) {
+            // 检测请求是否合法，不合法则返回状态码为 BAD_REQUEST 的响应
             Object data = req.getData();
 
             String msg;
@@ -95,8 +96,10 @@ public class HeaderExchangeHandler implements ChannelHandlerDelegate {
             return;
         }
         // find handler by message class.
+        // 获取 data 字段值，也就是 RpcInvocation 对象
         Object msg = req.getData();
         try {
+            // handler = DubboProtocol$1@3293 ,是DubboProtocol的一个匿名内部类
             CompletionStage<Object> future = handler.reply(channel, msg);
             future.whenComplete((appResult, t) -> {
                 try {
@@ -107,6 +110,8 @@ public class HeaderExchangeHandler implements ChannelHandlerDelegate {
                         res.setStatus(Response.SERVICE_ERROR);
                         res.setErrorMessage(StringUtils.toString(t));
                     }
+                    // 将调用结果返回给服务消费端
+                   // channel = HeaderExchangeChannel(NettyChannel(NioSocketChannel()))
                     channel.send(res);
                 } catch (RemotingException e) {
                     logger.warn("Send result to consumer failed, channel is " + channel + ", msg is " + e);
@@ -164,20 +169,26 @@ public class HeaderExchangeHandler implements ChannelHandlerDelegate {
 
     @Override
     public void received(Channel channel, Object message) throws RemotingException {
+        // channel = NettyChannel(NioSocketChannel())
         final ExchangeChannel exchangeChannel = HeaderExchangeChannel.getOrAddChannel(channel);
+        // 处理请求对象
         if (message instanceof Request) {
             // handle request.
             Request request = (Request) message;
             if (request.isEvent()) {
+                // 处理事件
                 handlerEvent(channel, request);
-            } else {
+            } else {  // 处理普通的请求
+                // 双向通信
                 if (request.isTwoWay()) {
                     handleRequest(exchangeChannel, request);
                 } else {
+                    // 如果是单向通信，仅向后调用指定服务即可，无需返回调用结果
                     handler.received(exchangeChannel, request.getData());
                 }
             }
         } else if (message instanceof Response) {
+            // 处理响应对象，服务消费方会执行此处逻辑，后面分析
             handleResponse(channel, (Response) message);
         } else if (message instanceof String) {
             if (isClientSide(channel)) {

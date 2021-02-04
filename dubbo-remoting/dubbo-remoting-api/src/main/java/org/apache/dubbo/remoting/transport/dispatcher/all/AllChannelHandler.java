@@ -35,10 +35,13 @@ public class AllChannelHandler extends WrappedChannelHandler {
         super(handler, url);
     }
 
+    /** 处理连接事件 */
     @Override
     public void connected(Channel channel) throws RemotingException {
+        // 获取线程池
         ExecutorService executor = getExecutorService();
         try {
+            // 将连接事件派发到线程池中处理
             executor.execute(new ChannelEventRunnable(channel, handler, ChannelState.CONNECTED));
         } catch (Throwable t) {
             throw new ExecutionException("connect event", channel, getClass() + " error when process connected event .", t);
@@ -66,12 +69,14 @@ public class AllChannelHandler extends WrappedChannelHandler {
         /**
          *  重点来了，这里得到是个共享线程池，也就是说 dubbo会开启一个 线程池 用来处理 客户端发来的消息
          *  线程池核心线程数量是200，最大线程数量也是200
+         *  这里的 message 变量类型可能是 Request，也可能是 Response
          */
         ExecutorService executor = getPreferredExecutorService(message);
         try {
             /**
              *  ChannelEventRunnable implements Runnable
              *  ChannelEventRunnable是个线程
+             *   将请求和响应消息派发到线程池中处理
              */
             executor.execute(new ChannelEventRunnable(channel, handler, ChannelState.RECEIVED, message));
         } catch (Throwable t) {

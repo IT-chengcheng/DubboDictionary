@@ -67,10 +67,10 @@ public class ExchangeCodec extends TelnetCodec {
     public void encode(Channel channel, ChannelBuffer buffer, Object msg) throws IOException {
         //编码
         if (msg instanceof Request) {
-            // 对 Request 对象进行编码
+            // 对 Request 对象进行编码  consumer发送消息时用到
             encodeRequest(channel, buffer, (Request) msg);
         } else if (msg instanceof Response) {
-            // 对 Response 对象进行编码，后面分析
+            // 对 Response 对象进行编码  provider响应消息时用到
             encodeResponse(channel, buffer, (Response) msg);
         } else {
             super.encode(channel, buffer, msg);
@@ -308,31 +308,40 @@ public class ExchangeCodec extends TelnetCodec {
         try {
             Serialization serialization = getSerialization(channel);
             // header.
+            // 创建消息头字节数组
             byte[] header = new byte[HEADER_LENGTH];
             // set magic number.
+            // 设置魔数
             Bytes.short2bytes(MAGIC, header);
             // set request and serialization flag.
+            // 设置序列化器编号
             header[2] = serialization.getContentTypeId();
             if (res.isHeartbeat()) {
                 header[2] |= FLAG_EVENT;
             }
             // set response status.
+            // 获取响应状态
             byte status = res.getStatus();
+            // 设置响应状态
             header[3] = status;
             // set request id.
+            // 设置请求编号
             Bytes.long2bytes(res.getId(), header, 4);
-
+            // 更新 writerIndex，为消息头预留 16 个字节的空间
             buffer.writerIndex(savedWriteIndex + HEADER_LENGTH);
             ChannelBufferOutputStream bos = new ChannelBufferOutputStream(buffer);
             ObjectOutput out = serialization.serialize(channel.getUrl(), bos);
             // encode response data or error message.
             if (status == Response.OK) {
                 if (res.isHeartbeat()) {
+                    // 对心跳响应结果进行序列化，已废弃
                     encodeEventData(channel, out, res.getResult());
                 } else {
+                    // 对调用结果进行序列化
                     encodeResponseData(channel, out, res.getResult(), res.getVersion());
                 }
             } else {
+                // 对错误信息进行序列化
                 out.writeUTF(res.getErrorMessage());
             }
             out.flushBuffer();
@@ -341,13 +350,17 @@ public class ExchangeCodec extends TelnetCodec {
             }
             bos.flush();
             bos.close();
-
+            // 获取写入的字节数，也就是消息体长度
             int len = bos.writtenBytes();
             checkPayload(channel, len);
+            // 将消息体长度写入到消息头中
             Bytes.int2bytes(len, header, 12);
             // write
+            // 将 buffer 指针移动到 savedWriteIndex，为写消息头做准备
             buffer.writerIndex(savedWriteIndex);
+            // 从 savedWriteIndex 下标处写入消息头
             buffer.writeBytes(header); // write header.
+            // 设置新的 writerIndex，writerIndex = 原写下标 + 消息头长度 + 消息体长度
             buffer.writerIndex(savedWriteIndex + HEADER_LENGTH + len);
         } catch (Throwable t) {
             // clear buffer

@@ -47,7 +47,7 @@ final class NettyChannel extends AbstractChannel {
      */
     private static final ConcurrentMap<Channel, NettyChannel> CHANNEL_MAP = new ConcurrentHashMap<Channel, NettyChannel>();
     /**
-     * netty channel
+     * netty channel  NioSocketChannel
      */
     private final Channel channel;
 
@@ -84,11 +84,18 @@ final class NettyChannel extends AbstractChannel {
         if (ch == null) {
             return null;
         }
+        // 尝试从集合中获取 NettyChannel 实例
         NettyChannel ret = CHANNEL_MAP.get(ch);
         if (ret == null) {
+            //  如果 ret = null，则创建一个新的 NettyChannel 实例
+            /**
+             *  ch = NioSocketChannel
+             *  handler = NettyServer(MultiMessageHandler(HeartbeatHandler(AllChannelHandler(DecodeHandler(HeaderExchangeHandler(DubboProtocol$1@3293))))))
+             */
             NettyChannel nettyChannel = new NettyChannel(ch, url, handler);
             if (ch.isActive()) {
                 nettyChannel.markActive(true);
+                // 将 <Channel, NettyChannel> 键值对存入 channelMap 集合中
                 ret = CHANNEL_MAP.putIfAbsent(ch, nettyChannel);
             }
             if (ret == null) {
@@ -97,7 +104,6 @@ final class NettyChannel extends AbstractChannel {
         }
         return ret;
     }
-
     /**
      * Remove the inactive channel.
      *

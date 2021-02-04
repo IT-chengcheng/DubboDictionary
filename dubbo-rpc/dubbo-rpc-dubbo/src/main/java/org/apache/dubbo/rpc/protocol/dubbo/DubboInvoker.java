@@ -142,7 +142,7 @@ public class DubboInvoker<T> extends AbstractInvoker<T> {
                 // HeaderExchangeChannel的request（）方法生成的 CompletableFuture appResponseFuture
                 CompletableFuture<AppResponse> appResponseFuture =
                         currentClient.request(inv, timeout, executor).thenApply(
-                                // 异步拿到 provider响应给consumer的结果 关键点 2
+                                // 异步拿到 provider响应给consumer的结果 关键点  2
                                 // 这个代码块是异步调用的，等CompletableFuture.complete(obj)执行完时，就会触发这个代码块
                                 obj -> (AppResponse) obj
                         );

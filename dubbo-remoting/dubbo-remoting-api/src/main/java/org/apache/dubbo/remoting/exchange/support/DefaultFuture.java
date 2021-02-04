@@ -50,9 +50,10 @@ public class DefaultFuture extends CompletableFuture<Object> {
 
     private static final Map<Long, Channel> CHANNELS = new ConcurrentHashMap<>();
     /**
-     * 类似于 请求id 与 请求线程的映射，这个缓存超级重要！！！！
-     * 当provider返回给consumer消息时，会将这个id返回来，然后
-     * 通过这个id找到之前的发送线程，然后返回给客户端数据
+     * 这个全局缓存的目的就是可以让：
+     * consumer的用户线程 跟 consumer的接收读写事件线程 进行通信
+     * key： ID就是requestID 也即是 responseID.
+     * value：用来阻塞的等待响应结果的对象，每个对象代表一次请求
      */
     private static final Map<Long, DefaultFuture> FUTURES = new ConcurrentHashMap<>();
 
@@ -171,6 +172,7 @@ public class DefaultFuture extends CompletableFuture<Object> {
 
     public static void received(Channel channel, Response response, boolean timeout) {
         try {
+            // 根据调用编号从 FUTURES 集合中查找指定的 DefaultFuture 对象
             DefaultFuture future = FUTURES.remove(response.getId());
             if (future != null) {
                 Timeout t = future.timeoutCheckTask;
@@ -178,6 +180,7 @@ public class DefaultFuture extends CompletableFuture<Object> {
                     // decrease Time
                     t.cancel();
                 }
+
                 future.doReceived(response);
             } else {
                 logger.warn("The timeout response finally returned at "
@@ -211,7 +214,7 @@ public class DefaultFuture extends CompletableFuture<Object> {
             throw new IllegalStateException("response cannot be null");
         }
         if (res.getStatus() == Response.OK) {
-            // 异步拿到 provider响应给consumer的结果 关键点1
+            // 异步拿到 provider响应给consumer的结果 关键点 1
             this.complete(res.getResult());
         } else if (res.getStatus() == Response.CLIENT_TIMEOUT || res.getStatus() == Response.SERVER_TIMEOUT) {
             this.completeExceptionally(new TimeoutException(res.getStatus() == Response.SERVER_TIMEOUT, channel, res.getErrorMessage()));

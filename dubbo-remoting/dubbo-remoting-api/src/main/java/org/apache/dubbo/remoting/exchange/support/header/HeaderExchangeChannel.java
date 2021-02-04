@@ -135,6 +135,7 @@ final class HeaderExchangeChannel implements ExchangeChannel {
         req.setTwoWay(true);
         // 这里的 request 变量类型为 RpcInvocation
         req.setData(request);
+       // DefaultFuture extends CompletableFuture
         DefaultFuture future = DefaultFuture.newFuture(channel, req, timeout, executor);
         try {
             // 调用 NettyClient 的 send 方法发送请求

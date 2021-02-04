@@ -57,7 +57,26 @@ public class HeaderExchangeHandler implements ChannelHandlerDelegate {
 
     static void handleResponse(Channel channel, Response response) throws RemotingException {
         if (response != null && !response.isHeartbeat()) {
+            // 核心，重点！！！
             DefaultFuture.received(channel, response);
+            /**
+             * 一、响应数据解码完成后，Dubbo 会将响应对象派发到线程池上。要注意的是，线程池中的线程并非用户的调用线程，
+             *     所以要想办法将响应对象从线程池线程传递到用户线程上，怎么才能做到呢：
+             * 二、这就用到了 JDK提供的 CompletableFuture,dubbo自定义的 DefaultFuture 继承了  CompletableFuture
+             *     不只是这里用到了 CompletableFuture，Dubbo有很多地方都是用了CompletableFuture，这是JDK1.8新特性
+             * 三、下面来解释，怎么做到的：
+             *    用户线程在发送完请求后的动作，做了两件事
+             *     1、将本次发送消息相关联的DefaultFuture对象放到 一个全局共享内存中Map<Long, DefaultFuture> FUTURES = new ConcurrentHashMap<>();
+             *         这个属性在DefaultFuture中，是个static final。key是本次请求的id=request.getId()  value=DefaultFuture对象
+             *     2、立即将DefaultFuture对象返回
+             *         xml配置的异步，将 DefaultFuture对象返回给程序员，程序员执行 DefaultFuture.get（）进行阻塞 等待结果
+             *         xml默认是同步 ，dubbo内部执行 DefaultFuture.get（）进行阻塞 等待结果
+             *
+             *    当响应对象到来后，到达本方法 handleResponse（），然后调用 DefaultFuture.received(channel, response);
+             *     这个方法主要做了两件事：
+             *       1、根据 response.getID从 FUTURES 中取到 DefaultFuture对象  （responseID的值就是consumer传给provider的requestID）
+             *       2、执行 DefaultFuture.complete(响应结果)，此时  用户线程会被唤醒，也就给程序员返回结果了
+             */
         }
     }
 
@@ -76,6 +95,8 @@ public class HeaderExchangeHandler implements ChannelHandlerDelegate {
     }
 
     void handleRequest(final ExchangeChannel channel, Request req) throws RemotingException {
+        // 会传入request对象的id，这个id是从consumer发过来的，然后在赋值给response，目的是为了利用这个ID做一个牵线
+        // 让consumer的用户线程 跟 consumer的接收读写事件线程 进行通信
         Response res = new Response(req.getId(), req.getVersion());
         if (req.isBroken()) {
             // 检测请求是否合法，不合法则返回状态码为 BAD_REQUEST 的响应
@@ -188,7 +209,7 @@ public class HeaderExchangeHandler implements ChannelHandlerDelegate {
                 }
             }
         } else if (message instanceof Response) {
-            // 处理响应对象，服务消费方会执行此处逻辑，后面分析
+            // 处理响应对象，服务消费方会执行此处逻辑
             handleResponse(channel, (Response) message);
         } else if (message instanceof String) {
             if (isClientSide(channel)) {

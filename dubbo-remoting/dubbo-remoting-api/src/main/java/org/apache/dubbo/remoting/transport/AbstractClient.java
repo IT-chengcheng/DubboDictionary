@@ -70,6 +70,10 @@ public abstract class AbstractClient extends AbstractEndpoint implements Client 
 
         try {
             // connect.   consumer 连接 provider
+            /**
+             * 消费端初始化的时候当超过生产者限制连接数量后，在AbstractClient类中可以看到，构造函数中调用方法connect()创建连接。
+             * 这时候会抛出异常，因为异常原因是等待创建连接超时3000ms
+             */
             connect();
             if (logger.isInfoEnabled()) {
                 logger.info("Start " + getClass().getSimpleName() + " " + NetUtils.getLocalAddress() + " connect to the server " + getRemoteAddress());

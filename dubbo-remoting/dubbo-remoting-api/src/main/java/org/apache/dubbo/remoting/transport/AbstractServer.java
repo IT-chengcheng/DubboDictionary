@@ -70,7 +70,10 @@ public abstract class AbstractServer extends AbstractEndpoint implements Remotin
             bindIp = ANYHOST_VALUE;
         }
         bindAddress = new InetSocketAddress(bindIp, bindPort);
-        // 获取最大可接受连接数
+        /**
+         * accepts用于生产者限制最大连接数量，保护自身服务可用性，0表示没有限制，比较危险的配置
+         *  该属性仅可设置在提供者端的<dubbo:provider/>与<dubbo:protocol/>。用于对指定协议的连接数量进行限制
+         */
         this.accepts = url.getParameter(ACCEPTS_KEY, DEFAULT_ACCEPTS);
         // 默认是长连接 ，最大闲置是 60* 1000,也就是 10分钟内 consumer-provider没做交互的话，就断开连接
         this.idleTimeout = url.getParameter(IDLE_TIMEOUT_KEY, DEFAULT_IDLE_TIMEOUT);

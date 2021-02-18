@@ -46,6 +46,30 @@ public class ActiveLimitFilter implements Filter, Filter.Listener {
 
     private static final String ACTIVELIMIT_FILTER_START_TIME = "activelimit_filter_start_time";
 
+    /**
+     * dubbo 限流 之 actives
+     *  其可以设置在提供者端，也可以设置在消费者端。可以设置为接口级别，也可以设置为方法级别
+     *  A、提供者端限流
+           根据消费者与提供者间建立的连接类型的不同，其意义也不同
+              长连接：表示当前长连接最多可以处理的请求个数。与长连接的数量没有关系
+              短连接：表示当前服务可以同时处理的短连接数量
+           类级别
+              <dubbo:service interface="com.foo.BarService" actives="10" />
+          方法级别
+             <dubbo:reference interface="com.foo.BarService">
+                <dubbo:method name="sayHello" actives="10" />
+             </dubbo:service>
+       B、消费者端限流
+          根据消费者与提供者间建立的连接类型的不同，其意义也不同：
+               长连接：表示当前消费者所发出的长连接中最多可以提交的请求个数。与长连接的数量没有关系。
+              短连接：表示当前消费者可以提交的短连接数量
+          类级别
+               <dubbo:reference interface="com.foo.BarService" actives="10" />
+         方法级别
+           <dubbo:reference interface="com.foo.BarService">
+               <dubbo:method name="sayHello" actives="10" />
+           </dubbo:service>
+     */
     @Override
     public Result invoke(Invoker<?> invoker, Invocation invocation) throws RpcException {
         URL url = invoker.getUrl();
@@ -59,6 +83,7 @@ public class ActiveLimitFilter implements Filter, Filter.Listener {
             synchronized (rpcStatus) {
                 while (!RpcStatus.beginCount(url, methodName, max)) {
                     try {
+                        // 如果允许则进行下一步RPC调用，不允许则会暂停等待线程timeout参数时长，若唤醒还未有空余线程则抛出异常
                         rpcStatus.wait(remain);
                     } catch (InterruptedException e) {
                         // ignore

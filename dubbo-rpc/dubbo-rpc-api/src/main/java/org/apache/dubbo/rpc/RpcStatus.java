@@ -100,6 +100,8 @@ public class RpcStatus {
      */
     public static boolean beginCount(URL url, String methodName, int max) {
         max = (max <= 0) ? Integer.MAX_VALUE : max;
+        // RpcStatus类封装生产者调用状态
+        // AtomicInteger原子类型active属性存储当前调用数量。通过其与URL中获取到的对应参数属性值比较判断
         RpcStatus appStatus = getStatus(url);
         RpcStatus methodStatus = getStatus(url, methodName);
         if (methodStatus.active.get() == Integer.MAX_VALUE) {

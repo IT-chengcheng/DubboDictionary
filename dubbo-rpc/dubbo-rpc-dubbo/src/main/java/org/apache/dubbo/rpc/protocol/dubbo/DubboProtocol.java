@@ -456,6 +456,19 @@ public class DubboProtocol extends AbstractProtocol {
         return invoker;
     }
 
+    /**
+     * dubbo 限流 之 connections
+     * 1、HTTP协议属于短连接，每次请求的时候都会多次验证握手建立连接。
+     * 2、默认的Dubbo协议属于长连接，采用NIO异步传输，每消费者与生产者之间默认采用单一长连接方式通信。
+     *     也就是每个消费者与生产者之间长连接默认就创建一个，所有请求共用。
+    3、 connections参数针对上述长连接与短连接具备不同作用效果：
+         短连接因为是多连接所以限制其个数
+         长连接因为是单一连接所以是指定其创建数量
+     4、connections参数生效的位置在消费端，生产端的配置会通过注册中心传递给消费端生效。
+     5、对于短连接，该属性效果与actives相同。但对于长连接，其限制的是长连接的个数。
+     6、一般情况下，会使connectons与actives联用，让connections限制长连接个数，让actives限制一个长连接中可以处理的请求个数。
+       联用前提：使用默认的Dubbo服务暴露协议
+     */
     private ExchangeClient[] getClients(URL url) {
         // whether to share connection
         // 是否共享连接
@@ -465,7 +478,7 @@ public class DubboProtocol extends AbstractProtocol {
         int connections = url.getParameter(CONNECTIONS_KEY, 0);
         List<ReferenceCountExchangeClient> shareClients = null;
         // if not configured, connection is shared, otherwise, one connection for one service
-        // 如果未配置 connections，则共享连接
+        // 如果未配置 connections，则共享连接，默认就是共享连接，也就是创建一个长连接
         if (connections == 0) {
             useShareConnect = true;
 

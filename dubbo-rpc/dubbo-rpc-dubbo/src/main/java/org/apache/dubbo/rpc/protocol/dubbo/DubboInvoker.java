@@ -115,7 +115,7 @@ public class DubboInvoker<T> extends AbstractInvoker<T> {
 
         ExchangeClient currentClient;
         if (clients.length == 1) {
-            // 从 clients 数组中获取 ExchangeClient
+            // 数量为1，说明就创建了一个长连接，共享长连接。从 clients 数组中获取 ExchangeClient
             currentClient = clients[0];
         } else {
             currentClient = clients[index.getAndIncrement() % clients.length];

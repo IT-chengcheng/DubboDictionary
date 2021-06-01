@@ -138,6 +138,7 @@ final class HeaderExchangeChannel implements ExchangeChannel {
        // DefaultFuture extends CompletableFuture
         DefaultFuture future = DefaultFuture.newFuture(channel, req, timeout, executor);
         try {
+
             // 调用 NettyClient 的 send 方法发送请求
             channel.send(req);
         } catch (RemotingException e) {

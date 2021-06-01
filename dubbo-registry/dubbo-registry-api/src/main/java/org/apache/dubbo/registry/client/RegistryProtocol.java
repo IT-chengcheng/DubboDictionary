@@ -627,7 +627,7 @@ public class RegistryProtocol implements Protocol {
          *     Cluster Invoker是一种 Invoker ：服务提供者的选择逻辑，以及远程调用失败后的的处理逻辑均是封装在 Cluster Invoker 中。
          * 6、Dubbo的集群容错5种方式
          *     Failover Cluster - 失败自动切换；  Failfast Cluster - 快速失败；       Failsafe Cluster - 失败安全
-         *     Failback Cluster - 失败自动恢复；  Forking Cluster - 并行调用多个服务提供者;  BroadcastClusterInvoker 广播调用
+         *     Failback Cluster - 失败自动恢复；  Forking Cluster - 并行调用多个服务提供者;  BroadcastClusterInvoker
          *
          *     默认采用 Failover Cluster 模式，现在以Failover Cluster 为例介绍，其他类似：
          *      FailoverCluster extends AbstractCluster( implements Cluster )
